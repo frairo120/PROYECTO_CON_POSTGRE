@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Empleado | SD-EPP{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/delete.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-box">
+        <div class="delete-header">
+            <h2>Eliminar Empleado</h2>
+            <p>¿Estás seguro de que deseas eliminar este empleado?</p>
+        </div>
+
+        <div class="delete-info">
+            <h3>{{ object.nombre_completo }}</h3>
+            <p><i class="fas fa-id-card"></i> {{ object.cedula_ecuatoriana }}</p>
+            <p><i class="fas fa-briefcase"></i> {{ object.cargo.nombre }}</p>
+            <p><i class="fas fa-calendar"></i> Ingresó el {{ object.fecha_ingreso|date:"d M, Y" }}</p>
+        </div>
+
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.
+        </div>
+
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="buttons">
+                <a href="{% url 'deteccion:lista_empleados' %}" class="btn-cancel">Cancelar</a>
+                <button type="submit" class="btn-delete">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+/* Variables para colores y fuentes */
+:root {
+    --primary-color: #2c3e50; /* Tono marrón para el botón INGRESAR */
+    --secondary-color: #2c3e50; /* Tono marrón más oscuro para OLVIDE LA CONTRASEÑA */
+    --text-color: #333;
+    --background-dark: #222; /* Para el texto del indicador de página */
+    --link-color: #007bff; /* Un azul estándar para enlaces */
+    --legal-text-color: #666;
+    --box-bg: #fff;
+    --placeholder-color: #aaa;
+}
+
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif; 
+    line-height: 1.6;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    background: url('../img/epp.jpg') no-repeat center center fixed;
+    background-size: cover;
+    
+    position: relative;
+}
+
+
+.login-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    background-color: rgba(0, 0, 0, 0.5); 
+    position: relative;
+    z-index: 10;
+}
+
+
+.login-box {
+    background-color: var(--box-bg);
+    padding: 40px;
+    border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px; 
+    text-align: center;
+}
+
+
+.logo-area {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    margin-bottom: -30px;
+}
+
+.logo {
+    width: 220px; 
+    height: auto;
+    
+    background-color: #FFFFFF;
+    border-radius: 0%;
+    padding: 10px;
+}
+
+.logo-text {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin-top: 50px;
+}
+
+.form-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+
+
+input[type="password"] {
+    width: 100%;
+    padding: 12px 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: center; 
+}
+input[type="text"] {
+    width: 100%;
+    padding: 12px 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: center; 
+}
+
+input::placeholder {
+    color: var(--placeholder-color);
+    opacity: 1; 
+}
+
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px; /* Espacio entre los botones */
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    flex-grow: 1; 
+    padding: 12px 15px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #8B4513; 
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+    
+}
+
+.btn-secondary:hover {
+    background-color: #A0522D;
+}
+
+
+.legal-text {
+    font-size: 0.8rem;
+    color: var(--legal-text-color);
+    line-height: 1.5;
+}
+
+.legal-text .link {
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.legal-text .link:hover {
+    text-decoration: underline;
+}
+
+
+.page-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background-color: var(--background-dark);
+    padding: 5px 15px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    z-index: 20; 
+}

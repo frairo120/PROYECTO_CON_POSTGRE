@@ -1,0 +1,270 @@
+/*
+ * Archivo: lista_usuarios.css
+ * Estilos para la gestión y lista de usuarios.
+ */
+
+/* ======================================= */
+/* Estilos Globales de la Interfaz */
+/* ======================================= */
+body {
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+.content-wrapper {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ======================================= */
+/* Encabezado (Page Header) */
+/* ======================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4CAF50; /* Un color diferente para distinguir de empleados */
+    display: flex;
+    align-items: center;
+}
+
+.page-title i {
+    margin-right: 10px;
+    font-size: 1.5em;
+}
+
+/* Botón Principal: Crear Nuevo Usuario */
+.btn-primary {
+    background-color: #17a2b8; /* Azul cyan/info */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+    background-color: #138496;
+    transform: translateY(-1px);
+}
+
+.btn-primary i {
+    margin-right: 8px;
+}
+
+/* ======================================= */
+/* Tarjeta y Contenedor de la Tabla */
+/* ======================================= */
+.card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #495057;
+}
+
+.card-body {
+    padding: 0;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+/* ======================================= */
+/* Estilos de la Tabla de Usuarios */
+/* ======================================= */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.user-table thead {
+    background-color: #f1f1f1;
+    border-bottom: 2px solid #17a2b8; /* Borde del color del botón */
+}
+
+.user-table th {
+    padding: 15px 20px;
+    text-align: left;
+    color: #495057;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.user-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.user-table tbody tr:hover {
+    background-color: #e6f8fa; /* Resalte al pasar el ratón */
+    transition: background-color 0.2s;
+}
+
+.user-email-info {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* ======================================= */
+/* Badges de Permisos y Estado */
+/* ======================================= */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 20px; /* Pill shape */
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-badge i {
+    margin-right: 5px;
+}
+
+/* Activo / Inactivo */
+.status-active {
+    background-color: #d4edda; /* Verde Claro */
+    color: #155724;
+}
+
+.status-inactive {
+    background-color: #f8d7da; /* Rojo Claro */
+    color: #721c24;
+}
+
+/* Staff / Superusuario / Default */
+.status-staff {
+    background-color: #cce5ff; /* Azul Claro (Staff) */
+    color: #004085;
+}
+
+.status-superuser {
+    background-color: #fff3cd; /* Amarillo Claro (Superuser) */
+    color: #856404;
+}
+
+.status-default {
+    background-color: #e2e3e5; /* Gris (No) */
+    color: #6c757d;
+}
+
+
+/* ======================================= */
+/* Botones de Acción */
+/* ======================================= */
+
+.actions {
+    min-width: 130px;
+}
+
+.action-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 34px;
+    height: 34px;
+    margin: 0 2px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn i {
+    font-size: 0.9rem;
+}
+
+.edit-btn {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.edit-btn:hover {
+    background-color: #ffc107;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.password-btn {
+    color: #17a2b8; /* Info/Cyan */
+    border-color: #17a2b8;
+}
+
+.password-btn:hover {
+    background-color: #17a2b8;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.delete-btn {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* ======================================= */
+/* Estado Vacío (Empty State) */
+/* ======================================= */
+
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+}

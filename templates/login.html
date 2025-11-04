@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Iniciar Sesión </title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-area">
+                <img src="{% static 'img/logo.png' %}" alt="Logo SD-EPP" class="logo">
+            </div>
+
+            <h2 class="form-title">INICIAR SESION</h2>
+
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li class="alert-{{ message.tags }}">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <form method="POST" action="{% url 'deteccion:login' %}"> 
+                {% csrf_token %} <div class="form-field-group">
+                    {{ form.username }} 
+                </div>
+
+                <div class="form-field-group">
+                    {{ form.password }}
+                </div>
+                
+                {% if form.non_field_errors %}
+                    <div class="error-list">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">INGRESAR</button>
+                    <button type="button" class="btn btn-secondary">OLVIDE LA CONTRASEÑA</button>
+                </div>
+            </form>
+            <p class="legal-text">
+                Al hacer clic en Continuar aceptas nuestros
+                <a href="#" class="link">Términos de servicio</a> y la <a href="#" class="link">Política de privacidad</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

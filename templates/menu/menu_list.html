@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SD-EPP | Listado de Menús{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/lista_menus.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-list-alt"></i> Listado de Menús
+        </h1>
+        <a href="{% url 'deteccion:menu_create' %}" class="btn-primary-create">
+            <i class="fas fa-plus-circle"></i>
+            <span>Crear Nuevo Menú</span>
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header-filters">
+            <form method="get" class="filter-form">
+                <div class="form-control-group">
+                    <i class="fas fa-search form-icon"></i>
+                    <input type="text" name="q" placeholder="Buscar menú por nombre..." 
+                           value="{{ request.GET.q|default:"" }}" class="form-input">
+                </div>
+                
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+                {% if request.GET.q %}
+                    <a href="." class="btn-reset">
+                        <i class="fas fa-redo"></i> Limpiar
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="card-body">
+            <div class="table-container">
+                <table class="menu-table">
+                    <thead>
+                        <tr>
+                            <th class="name-column">Nombre</th>
+                            <th class="icon-column">Ícono</th>
+                            <th class="order-column text-center">Orden</th>
+                            <th class="actions-column text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for menu in menus %}
+                        <tr class="menu-row">
+                            <td class="fw-bold">{{ menu.name }}</td>
+                            <td class="text-muted">
+                                <i class="{{ menu.icon }} fa-lg menu-icon-preview"></i> 
+                                <span class="d-none d-sm-inline">{{ menu.icon }}</span>
+                            </td>
+                            <td class="text-center">{{ menu.order }}</td>
+                            <td class="text-center actions">
+                                <a href="{% url 'deteccion:menu_editar' menu.id %}" 
+                                   class="action-btn edit-btn" title="Editar Menú">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'deteccion:menu_eliminar' menu.id %}" 
+                                   class="action-btn delete-btn" title="Eliminar Menú">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-row">
+                                <i class="fas fa-utensils"></i> No se encontraron menús registrados.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

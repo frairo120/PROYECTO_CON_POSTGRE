@@ -1,0 +1,144 @@
+/* ======================================= */
+/* ====== ESTILOS GENERALES DE FORMULARIO ====== */
+/* ======================================= */
+
+/* Centrar el formulario dentro del área de contenido */
+.form-container-centered {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; 
+    padding: 30px 0;
+}
+
+/* Estilo de la tarjeta del formulario (usa la clase .card de prueba.css) */
+.form-card {
+    max-width: 500px; /* Limita el ancho del formulario */
+    width: 100%;
+}
+
+.form-card h2 {
+    /* Estilo para el título de la tarjeta */
+    padding: 20px 25px 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0;
+    font-size: 1.5rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Cuerpo de la tarjeta */
+.card-body {
+    padding: 25px;
+}
+
+/* Contenedor de cada campo (reemplaza .mb-3) */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Estilo para etiquetas de formulario */
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+}
+
+.form-label i {
+    margin-right: 8px;
+    color: var(--secondary); /* Color del icono, usando la variable de prueba.css */
+}
+
+/* Estilo para campos de entrada de formulario (la clase inyectada en el HTML) */
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius); /* Usando la variable de prueba.css */
+    font-size: 1rem;
+    color: #333;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.form-control:focus {
+    border-color: var(--secondary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); /* Sombra suave de enfoque */
+}
+
+/* Estilo para mensajes de error de campo */
+.form-error-text {
+    color: var(--accent, #e74c3c); 
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+/* Controles de acción (botones) */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end; /* Alinear botones a la derecha */
+    padding-top: 10px;
+}
+
+/* Estilos de botones generales */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none; 
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background-color: var(--secondary); 
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9; 
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: var(--gray); 
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d; 
+    transform: translateY(-1px);
+}
+
+/* Estilo para errores de formulario sin campo */
+.alert-box {
+    padding: 15px 20px;
+    border-radius: var(--border-radius);
+    border-left: 5px solid;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
+.alert-box.alert-high {
+    background-color: rgba(231, 76, 60, 0.15);
+    border-left-color: var(--accent);
+    color: var(--accent);
+}
+
+.alert-box ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 5px;
+}

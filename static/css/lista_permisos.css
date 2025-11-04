@@ -1,0 +1,248 @@
+/*
+ * Archivo: lista_permisos.css
+ * Estilos para la tabla de Permisos de Grupos por Módulo.
+ */
+
+/* ======================================= */
+/* 1. Estilos Globales y Contenedor */
+/* ======================================= */
+body {
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+.content-wrapper {
+    padding: 25px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ======================================= */
+/* 2. Encabezado de la Página */
+/* ======================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    background: linear-gradient(90deg, #6f42c1, #563d7c); /* Púrpura oscuro */
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.page-title i {
+    margin-right: 12px;
+    font-size: 1.2em;
+}
+
+/* Botón Principal: Asignar Permisos */
+.btn-primary-create {
+    background-color: #17a2b8; /* Azul cyan/info */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary-create:hover {
+    background-color: #138496;
+    transform: translateY(-1px);
+}
+
+.btn-primary-create i {
+    margin-right: 8px;
+}
+
+/* ======================================= */
+/* 3. Tarjeta y Contenedor de la Tabla */
+/* ======================================= */
+.card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid #e3e6f0;
+}
+
+.card-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.card-header h2 {
+    font-size: 1.3rem;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.card-body {
+    padding: 0;
+    overflow-x: auto;
+}
+
+/* ======================================= */
+/* 4. Estilos de la Tabla (permissions-table) */
+/* ======================================= */
+.permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.permissions-table thead {
+    background-color: #f4f6f9;
+    border-bottom: 3px solid #6f42c1; /* Color principal */
+}
+
+.permissions-table th {
+    padding: 15px 20px;
+    text-align: left;
+    color: #5a5c69;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.permissions-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e3e6f0;
+    vertical-align: middle;
+}
+
+.permissions-table tbody tr:hover {
+    background-color: #f6f3fc; /* Resalte suave */
+    transition: background-color 0.15s;
+}
+
+.fw-bold { font-weight: 600; }
+
+.group-name {
+    color: #6f42c1;
+}
+
+.module-icon {
+    margin-right: 5px;
+    color: #17a2b8;
+}
+
+.empty-row {
+    text-align: center;
+    color: #858796;
+    padding: 30px !important;
+    font-style: italic;
+}
+
+.empty-row i {
+    margin-right: 8px;
+}
+
+/* ======================================= */
+/* 5. Badges de Permisos */
+/* ======================================= */
+
+.permissions-column {
+    min-width: 350px;
+}
+
+.badge-permission {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 3px 3px 3px 0;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Colores de Badges: Usando las primeras 4 letras del permiso para el estilo */
+.badge-lect { /* Lectura */
+    background-color: #cce5ff; /* Azul claro */
+    color: #004085;
+}
+
+.badge-edit { /* Edición */
+    background-color: #fff3cd; /* Amarillo claro */
+    color: #856404;
+}
+
+.badge-crea { /* Creación */
+    background-color: #d4edda; /* Verde claro */
+    color: #155724;
+}
+
+.badge-elim { /* Eliminación */
+    background-color: #f8d7da; /* Rojo claro */
+    color: #721c24;
+}
+
+.badge-none { /* No asignado */
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.badge-none i {
+    margin-right: 5px;
+}
+
+/* ======================================= */
+/* 6. Botones de Acción */
+/* ======================================= */
+
+.actions-column {
+    min-width: 120px;
+}
+
+.action-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 34px;
+    height: 34px;
+    margin: 0 4px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.action-btn i {
+    font-size: 0.9rem;
+}
+
+.edit-btn {
+    color: #ffc107; /* Amarillo de advertencia */
+    border-color: #ffc107;
+}
+
+.edit-btn:hover {
+    background-color: #ffc107;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    color: #dc3545; /* Rojo de peligro */
+    border-color: #dc3545;
+}
+
+.delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+}

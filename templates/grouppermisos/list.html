@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SD-EPP | Permisos de Grupos{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/lista_permisos.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-user-shield"></i> Gestión de Permisos por Rol
+        </h1>
+        <a href="{% url 'deteccion:cargo_permiso_create' %}" class="btn-primary-create">
+            <i class="fas fa-user-lock"></i>
+            <span>Asignar Nuevos Permisos</span>
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Configuración de Accesos (Grupos x Módulo)</h2>
+            <p class="text-muted">Lista detallada de los permisos asignados a cada grupo de usuario por módulo.</p>
+        </div>
+        
+        <div class="card-body">
+            {% if groups %}
+            <div class="table-container">
+                <table class="permissions-table">
+                    <thead>
+                        <tr>
+                            <th class="group-column">Grupo / Rol</th>
+                            <th class="module-column">Módulo Principal</th>
+                            <th class="permissions-column">Permisos Detallados</th>
+                            <th class="actions-column text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                            {% for gmp in group.module_permissions.all %}
+                            <tr class="permission-row">
+                                <td class="group-name fw-bold">{{ group.name }}</td>
+                                <td><i class="fas fa-sitemap module-icon"></i> {{ gmp.module.name }}</td>
+                                <td class="permission-badges-cell">
+                                    {% for perm in gmp.permissions.all %}
+                                        <span class="badge-permission badge-{{ perm.name|lower|slice:":4" }}">
+                                            {{ perm.name }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="badge-permission badge-none">
+                                            <i class="fas fa-minus-circle"></i> No asignados
+                                        </span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-center actions">
+                                    <a href="{% url 'deteccion:cargo_permiso_edit' gmp.id %}" 
+                                       class="action-btn edit-btn" title="Editar Permisos">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'deteccion:cargo_permiso_delete' gmp.id %}" 
+                                       class="action-btn delete-btn" title="Eliminar Asignación">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-row">
+                                <i class="fas fa-key"></i> No hay configuraciones de permisos por grupo asignadas.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-key"></i>
+                    <h3>No hay permisos asignados</h3>
+                    <p>Aún no se han definido permisos para los grupos de usuarios en ningún módulo.</p>
+                    <a href="{% url 'deteccion:cargo_permiso_create' %}" class="btn-primary-create mt-3">
+                        <i class="fas fa-plus"></i> Asignar Permisos Ahora
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

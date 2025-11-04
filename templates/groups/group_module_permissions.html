@@ -1,0 +1,57 @@
+{% extends 'home.html' %}
+{% load static %}
+
+{% block content %}
+<section class="dark:bg-principal p-4">
+    <h1 class="text-3xl font-bold text-center mb-6 dark:text-white">Permisos por Grupo y Módulo</h1>
+    
+    <div class="space-y-6">
+        {% for group in groups %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <!-- Encabezado del Grupo -->
+            <div class="bg-indigo-600 dark:bg-indigo-800 p-4 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-white">{{ group.name }}</h2>
+                <span class="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
+                    {{ group.module_permissions.count }} módulos
+                </span>
+            </div>
+
+            <!-- Módulos del Grupo -->
+            <div class="p-4 space-y-4">
+                {% for module_perm in group.module_permissions.all %}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <!-- Encabezado del Módulo -->
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 flex items-center">
+                        <i class="{{ module_perm.module.icon }} mr-2 text-indigo-500"></i>
+                        <h3 class="font-medium dark:text-white">{{ module_perm.module.name }}</h3>
+                    </div>
+
+                    <!-- Permisos del Módulo -->
+                    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {% for perm in module_perm.permissions.all %}
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" checked disabled 
+                                       class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <span class="font-medium dark:text-gray-200">{{ perm.name }}</span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {{ perm.content_type.app_label }}.{{ perm.codename }}
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 italic">No hay permisos asignados</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 italic text-center py-4">No hay módulos asignados</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends 'home.html' %} 
+<title>{% block title %}{{title}}{% endblock %}</title>
+{% block content %}
+    {% load static %}
+    {% include 'fragments/messages.html' %}
+    <section class="dark:bg-principal mt-2">
+        <div class="text-center" data-aos="fade-up" data-aos-delay="200">
+            <div class="sm:pt-8 lg:pt-4">
+                <h1 class="rounded-2xl bg-indigo-500 px-2 py-1 text-white uppercase text-4xl">
+                    {{ title1 }}
+                </h1>
+            </div>
+            <div class="lg:p-2 rounded-3xl" data-aos="fade-up" data-aos-delay="200">
+                <!-- Barra de búsqueda -->
+                <div class="p-4 flex justify-center">
+                    <label for="table-search" class="sr-only">Search</label>
+                    <div class="relative mt-1">
+                        <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                            </svg>
+                        </div>
+                        <form method="GET">
+                            <input type="text" name="q" id="table-search"
+                                class="text-center pl-10 shadow-sm bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 pr-12 dark:bg-principal dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                                placeholder="Búsqueda sin límites" value="{{ request.GET.q }}">
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Contenedor grupos -->
+                <div class="flex flex-col space-y-6 px-4">
+                    {% for group in groups %}
+                    <div 
+                        tabindex="0"
+                        class="cursor-pointer bg-white dark:bg-[#0b1121] rounded-xl shadow-lg p-6 hover:shadow-2xl transform hover:scale-[1.03] transition duration-300"
+                        onclick="togglePermissions(event, 'perms-{{ group.id }}')"
+                        onkeypress="if(event.key === 'Enter'){ togglePermissions(event, 'perms-{{ group.id }}') }"
+                        aria-expanded="false"
+                        aria-controls="perms-{{ group.id }}"
+                        role="button"
+                        aria-label="Grupo {{ group.name }}"
+                    >
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-2xl font-semibold mb-2 text-gray-900 dark:text-gray-100 truncate">
+                                    {{ group.name }}
+                                </h3>
+                                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-sm">
+                                    {{ group.permissions.all|length }} permisos asignados
+                                </span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                {% if permissions.change_group %}
+                                <a href="{% url 'security:group_update' group.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                   title="Editar grupo">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if permissions.delete_group %}
+                                <button onclick="openDeleteModal('{{ group.id }}', '{{ group.name }}')"
+                                   class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                   title="Eliminar grupo">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Permisos ocultos -->
+                        <div id="perms-{{ group.id }}" class="mt-4 hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="font-semibold text-gray-800 dark:text-gray-200 border-b border-gray-200 pb-2">
+                                    Permisos asignados:
+                                </h4>
+                                {% if permissions.change_group %}
+                                <a href="{% url 'security:group_permissions' group.id %}" 
+                                   class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full">
+                                    <i class="fas fa-plus mr-1"></i> Gestionar permisos
+                                </a>
+                                {% endif %}
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {% for perm in group.permissions.all %}
+                                <div class="bg-gray-50 dark:bg-[#121c33] rounded-lg p-3 border border-gray-300 dark:border-secundario">
+                                    <span class="text-gray-900 dark:text-gray-100">{{ perm.name }}</span>
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {{ perm.codename }}
+                                    </span>
+                                </div>
+                                {% empty %}
+                                <div class="col-span-full italic text-gray-400 text-center py-4">
+                                    No hay permisos asignados
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <p class="text-gray-500 dark:text-gray-400">No se encontraron grupos</p>
+                        {% if permissions.add_group %}
+                        <a href="{% url 'security:group_create' %}" class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full">
+                            <i class="fas fa-plus mr-2"></i> Crear primer grupo
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Paginación -->
+                {% if groups %}
+                <div class="flex justify-center mt-4">
+                    <nav aria-label="Page navigation example">
+                        <ul class="inline-flex -space-x-px">
+                            {% if page_obj.has_previous %}
+                            <li>
+                                <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#0b1121] dark:border-secundario dark:text-gray-400 dark:hover:bg-[#121c33] dark:hover:text-white">Anterior</a>
+                            </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                            <li>
+                                <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 leading-tight {% if num == page_obj.number %}text-blue-600 bg-blue-50 border border-gray-300 hover:bg-blue-100 hover:text-blue-700 dark:bg-secundario dark:border-principal dark:text-blue-300{% else %}text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-[#0b1121] dark:border-secundario dark:text-gray-400 dark:hover:bg-[#121c33] dark:hover:text-white{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li>
+                                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                    class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-[#0b1121] dark:border-secundario dark:text-gray-400 dark:hover:bg-[#121c33] dark:hover:text-white">Siguiente</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                <!-- Enlaces adicionales -->
+                <div class="flex flex-col md:flex-row justify-center form-group text-center p-4 space-y-2 md:space-y-0 md:space-x-4">
+                    {% if permissions.add_group %}
+                    <a class="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-full flex items-center justify-center transition-colors duration-300"
+                        href="{% url 'security:group_create' %}">
+                        <i class="fa-solid fa-plus mr-2"></i> Nuevo Grupo
+                    </a>
+                    {% endif %}
+                    <a class="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-full flex items-center justify-center transition-colors duration-300"
+                        href="{% url 'home' %}">
+                        <i class="fa-solid fa-house mr-2"></i> Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% include 'fragments/delete.html' %}
+    <script>
+        function openDeleteModal(id, name) {
+            const deleteForm = document.getElementById('deleteForm');
+            deleteForm.action = `{% url 'security:group_delete' 0 %}`.replace('0', id);
+            document.getElementById('Description').textContent = `ID: ${id} - ${name}`;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function togglePermissions(event, id) {
+            event.stopPropagation();
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.toggle('hidden');
+            }
+        }
+    </script>
+{% endblock %}

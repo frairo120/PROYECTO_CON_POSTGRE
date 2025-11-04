@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SD-EPP | Lista de Módulos{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/lista_modulos.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-sitemap"></i> Gestión de Módulos
+        </h1>
+        <a href="{% url 'deteccion:module_create' %}" class="btn-primary-create">
+            <i class="fas fa-plus-square"></i>
+            <span>Crear Módulo</span>
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header-filters">
+            <form method="get" class="filter-form">
+                <div class="form-control-group">
+                    <i class="fas fa-search form-icon"></i>
+                    <input type="text" name="q" placeholder="Buscar módulo o menú"
+                        value="{{ search }}" class="form-input">
+                </div>
+
+                <div class="form-control-group">
+                    <i class="fas fa-toggle-on form-icon"></i>
+                    <select name="is_active" class="form-select">
+                        <option value="">Todos los Estados</option>
+                        <option value="true" {% if is_active == 'true' %}selected{% endif %}>Activos</option>
+                        <option value="false" {% if is_active == 'false' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                <a href="." class="btn-reset">
+                    <i class="fas fa-redo"></i> Limpiar
+                </a>
+            </form>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="table-container">
+                <table class="module-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Nombre</th>
+                            <th>URL</th>
+                            <th>Menú</th>
+                            <th>Descripción</th>
+                            <th>Ícono</th>
+                            <th class="text-center">Orden</th>
+                            <th class="text-center">Activo</th>
+                            <th class="text-center actions-column">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module in modules %}
+                        <tr class="module-row">
+                            <td class="text-center text-muted">{{ forloop.counter }}</td>
+                            <td class="fw-bold">{{ module.name }}</td>
+                            <td class="module-url">{{ module.url }}</td>
+                            <td><span class="badge-menu">{{ module.menu.name }}</span></td>
+                            <td class="text-truncate">{{ module.description|default:"-" }}</td>
+                            <td>
+                                <i class="{{ module.icon }}"></i> <small class="text-muted">{{ module.icon }}</small>
+                            </td>
+                            <td class="text-center">{{ module.order }}</td>
+                            <td class="text-center">
+                                {% if module.is_active %}
+                                    <span class="status-badge status-active"><i class="fas fa-check"></i> Sí</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive"><i class="fas fa-times"></i> No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center actions">
+                                <a href="{% url 'deteccion:module_update' module.id %}"
+                                   class="action-btn edit-btn" title="Editar Módulo">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'deteccion:module_delete' module.id %}"
+                                   class="action-btn delete-btn" title="Eliminar Módulo">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="empty-row">
+                                <i class="fas fa-folder-open"></i> No se encontraron módulos.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

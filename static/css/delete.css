@@ -1,0 +1,236 @@
+/* ====================== */
+/* RESET & TIPOGRAFÍA     */
+/* ====================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+/* ====================== */
+/* CONTENEDOR PRINCIPAL   */
+/* ====================== */
+.delete-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.delete-box {
+    background: #ffffff;
+    width: 100%;
+    max-width: 460px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.6s ease-out;
+    border: 1px solid #e0e6ed;
+}
+
+/* ====================== */
+/* CABECERA               */
+/* ====================== */
+.delete-header {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+.delete-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.delete-header p {
+    font-size: 1rem;
+    opacity: 0.95;
+    font-weight: 300;
+}
+
+/* ====================== */
+/* INFO DEL EMPLEADO      */
+/* ====================== */
+.delete-info {
+    padding: 1.8rem;
+    background: #f8f9fc;
+    border-bottom: 1px dashed #dfe6ec;
+}
+
+.delete-info h3 {
+    font-size: 1.5rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    text-align: center;
+    position: relative;
+}
+
+.delete-info h3::after {
+    content: '';
+    width: 60px;
+    height: 3px;
+    background: #e74c3c;
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.delete-info p {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    margin: 0.9rem 0;
+    color: #34495e;
+    padding: 0.4rem 0;
+}
+
+.delete-info i {
+    width: 36px;
+    height: 36px;
+    background: #e74c3c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    margin-right: 12px;
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
+/* ====================== */
+/* ADVERTENCIA            */
+/* ====================== */
+.warning-text {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    margin: 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ffcdd2;
+    box-shadow: 0 4px 12px rgba(198, 40, 40, 0.1);
+}
+
+.warning-text i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+    animation: pulse 2s infinite;
+}
+
+/* ====================== */
+/* BOTONES                */
+/* ====================== */
+.delete-form {
+    padding: 1.5rem;
+    background: #ffffff;
+}
+
+.buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-cancel,
+.btn-delete {
+    padding: 0.85rem 1.8rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-width: 140px;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-cancel {
+    background: #ecf0f1;
+    color: #7f8c8d;
+    border: 2px solid #bdc3c7;
+}
+
+.btn-cancel:hover {
+    background: #d5dbdb;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.btn-delete:hover {
+    background: #c0392b;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5);
+}
+
+.btn-delete i {
+    transition: transform 0.3s;
+}
+
+.btn-delete:hover i {
+    transform: scale(1.2);
+}
+
+/* ====================== */
+/* ANIMACIONES            */
+/* ====================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ====================== */
+/* RESPONSIVE             */
+/* ====================== */
+@media (max-width: 480px) {
+    .delete-header h2 {
+        font-size: 1.5rem;
+    }
+    .buttons {
+        flex-direction: column;
+    }
+    .btn-cancel, .btn-delete {
+        width: 100%;
+    }
+}

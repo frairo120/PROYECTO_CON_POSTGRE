@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SD-EPP | Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/prueba.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    {% csrf_token %}
+    <div class="dashboard-container">
+        
+        <!-- ========== SIDEBAR ========== -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="{% static 'img/logo.png' %}" alt="Logo SD-EPP" class="sidebar-logo">
+            </div>
+            <!-- Módulos Estáticos -->
+            <div class="sidebar-section">
+            </div>
+                
+            <!-- Módulos Dinámicos (por permisos) -->
+            {% if user.is_authenticated and menu_list %}
+            <div class="sidebar-section">
+                <p class="section-title">Accesos Personalizados</p>
+                {% for menu_item in menu_list %}
+                    <div class="menu-block">
+                        <div class="menu-title-small">{{ menu_item.menu.name }}</div>
+                        {% for module_permission in menu_item.group_module_permission_list %}
+                            {% with module=module_permission.module %}
+                                {% if module.url %}
+                                    <a href="{{ module.url }}" class="nav-button submodule">
+                                        {% if module.icon %}
+                                            <i class="{{ module.icon }}"></i>
+                                        {% else %}
+                                            <i class="fas fa-th-large"></i>
+                                        {% endif %}
+                                        <span>{{ module.name }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+
+        </aside>
+
+        <!-- ========== MAIN CONTENT ========== -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="user-info">
+                    <img src="{% static 'img/perfil.jpg' %}" alt="Foto de Perfil" class="user-profile-pic"> 
+                    <span>Bienvenido <strong></strong></span>
+                </div>
+                <div class="header-actions">
+                    <button class="notification-button">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    
+                    <form id="logout-form" action="{% url 'deteccion:logout' %}" method="post" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <button type="submit" class="logout-button" onclick="document.getElementById('logout-form').submit(); return false;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </div>
+            </header>
+
+                <!-- Cámara y Notificaciones -->
+                <section class="cards-container">
+                    <div class="card camera-card">
+                        <h2><i class="fas fa-video"></i> Cámara en vivo</h2>
+                        <div class="video-placeholder">
+                            <img id="video-feed" style="display: none;" alt="Cámara en vivo" class="video-feed">
+                            <div id="camera-status" style="text-align: center; padding: 20px; color: #ccc;">
+                                Cámara apagada
+                            </div>
+                        </div>
+                        <div class="camera-controls">
+                            <div style="display: flex; gap: 10px; flex: 1;">
+                                <select id="camera-type" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                    <option value="pc">Cámara PC</option>
+                                    <option value="droidcam">DroidCam</option>
+                                </select>
+                                <div id="droidcam-settings" style="display: none; display: flex; gap: 5px;">
+                                    <input type="text" id="droidcam-ip" placeholder="IP" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 100px;">
+                                    <input type="text" id="droidcam-port" placeholder="Puerto" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 70px;">
+                                </div>
+                            </div>
+                            <button class="control-button fullscreen-btn">
+                                <i class="fas fa-expand"></i> <span>Pantalla completa</span>
+                            </button>
+                            <button class="control-button toggle-camera" data-status="off">
+                                <i class="fas fa-power-off"></i> <span>Encender</span>
+                            </button>
+                            <a href="{% url 'deteccion:grabaciones' %}" class="control-button">
+                                <i class="fas fa-history"></i> <span>Grabaciones</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card notifications-card">
+                        <h2><i class="fas fa-bell"></i> Notificaciones recientes</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ALERTA</th>
+                                    <th>HORA</th>
+                                    <th>VIDEO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if alerts %}
+                                    {% for a in alerts %}
+                                        <tr>
+                                            <td>
+                                                <span class="alert-badge alert-{{ a.level }}">{{ a.message }}</span>
+                                            </td>
+                                            <td>{{ a.timestamp|date:"H:i:s d-m-Y" }}</td>
+                                            <td>
+                                                {% if a.video %}
+                                                    <a href="/{{ a.video }}" target="_blank">Ver</a>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3">No hay alertas recientes</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Navegación activa
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // DroidCam settings
+        document.getElementById('camera-type').addEventListener('change', function() {
+            document.getElementById('droidcam-settings').style.display = this.value === 'droidcam' ? 'flex' : 'none';
+        });
+
+        // Toggle cámara
+        function toggleCamera(action) {
+            const cameraType = document.getElementById('camera-type').value;
+            const data = { action, camera_type: cameraType };
+            if (cameraType === 'droidcam') {
+                data.ip = document.getElementById('droidcam-ip').value || '192.168.1.100';
+                data.port = document.getElementById('droidcam-port').value || '4747';
+            }
+            return fetch('{% url "deteccion:toggle_camera" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(data)
+            }).then(r => r.json());
+        }
+
+        document.querySelector('.toggle-camera').addEventListener('click', function() {
+            const btn = this;
+            const status = btn.getAttribute('data-status');
+            const action = status === 'off' ? 'start' : 'stop';
+            const video = document.getElementById('video-feed');
+            const statusDiv = document.getElementById('camera-status');
+
+            toggleCamera(action).then(data => {
+                if (data.status === 'started') {
+                    btn.setAttribute('data-status', 'on');
+                    btn.querySelector('span').textContent = 'Apagar';
+                    btn.querySelector('i').className = 'fas fa-power-off';
+                    video.src = '{% url "deteccion:video_feed" %}';
+                    video.style.display = 'block';
+                    statusDiv.style.display = 'none';
+                } else {
+                    btn.setAttribute('data-status', 'off');
+                    btn.querySelector('span').textContent = 'Encender';
+                    btn.querySelector('i').className = 'fas fa-power-off';
+                    video.style.display = 'none';
+                    statusDiv.style.display = 'block';
+                    statusDiv.textContent = 'Cámara apagada';
+                }
+            });
+        });
+
+        // Fullscreen
+        document.querySelector('.fullscreen-btn').addEventListener('click', () => {
+            const video = document.querySelector('.video-feed');
+            if (video.requestFullscreen) video.requestFullscreen();
+        });
+
+        // Notificaciones
+        document.querySelector('.notification-button').addEventListener('click', () => {
+            alert('Mostrando notificaciones');
+        });
+    </script>
+</body>
+</html>

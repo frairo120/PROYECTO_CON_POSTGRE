@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Empleado | SD-EPP{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/delete.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-box">
+        <div class="delete-header">
+            <h2>Eliminar Empleado</h2>
+            <p>¿Estás seguro de que deseas eliminar este empleado?</p>
+        </div>
+
+
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.
+        </div>
+
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="buttons">
+                <a href="{% url 'deteccion:cargo_permiso_list' %}" class="btn-cancel">Cancelar</a>
+                <button type="submit" class="btn-delete">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

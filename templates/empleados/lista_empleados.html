@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}SD-EPP | Lista de Empleados{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/lista_empleados.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="page-header">
+        
+        <h1 class="page-title">
+            <i class="fas fa-users"></i> Gestión de Empleados
+        </h1>
+        <a href="{% url 'deteccion:crear_empleado' %}" class="btn-primary">
+            <i class="fas fa-user-plus"></i>
+            <span>Nuevo Empleado</span>
+        </a>
+        {% if user.is_authenticated and menu_list %}
+            <div class="sidebar-section">
+                <p class="section-title">Accesos Personalizados</p>
+                {% for menu_item in menu_list %}
+                    <div class="menu-block">
+                        <div class="menu-title-small">{{ menu_item.menu.name }}</div>
+                        {% for module_permission in menu_item.group_module_permission_list %}
+                            {% with module=module_permission.module %}
+                                {% if module.url %}
+                                    <a href="{{ module.url }}" class="nav-button submodule">
+                                        {% if module.icon %}
+                                            <i class="{{ module.icon }}"></i>
+                                        {% else %}
+                                            <i class="fas fa-th-large"></i>
+                                        {% endif %}
+                                        <span>{{ module.name }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+    </div>
+    
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Lista de Trabajadores</h2>
+            <p class="text-muted">Total: <strong>{{ empleados|length }}</strong> empleados registrados</p>
+        </div>
+
+        <div class="card-body">
+            {% if empleados %}
+            <div class="table-container">
+                <table class="employee-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre Completo</th>
+                            <th>Cédula / Email</th>
+                            <th>Cargo</th>
+                            <th class="text-center">Ingreso</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for empleado in empleados %}
+                        <tr class="employee-row">
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="employee-name">
+                                    <strong>{{ empleado.nombre_completo }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="employee-id">
+                                    <span class="cedula">{{ empleado.cedula_ecuatoriana }}</span>
+                                    {% if empleado.user %}
+                                    <small class="email"><i class="fas fa-envelope"></i> {{ empleado.user.email }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-cargo">{{ empleado.cargo.nombre }}</span>
+                            </td>
+                            <td class="text-center">{{ empleado.fecha_ingreso|date:"d M, Y" }}</td>
+                            <td class="text-center">
+                                {% if empleado.activo %}
+                                    <span class="status-badge status-active">
+                                        <i class="fas fa-check-circle"></i> Activo
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fas fa-times-circle"></i> Inactivo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center actions">
+                                <a href="{% url 'deteccion:empleado_editar' empleado.pk %}" class="action-btn edit-btn" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'deteccion:empleado_eliminar' empleado.pk %}" class="action-btn delete-btn" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h3>No hay empleados registrados</h3>
+                <p>Comienza agregando el primer trabajador al sistema.</p>
+                <a href="{% url 'deteccion:empleado_create' %}" class="btn-primary mt-3">
+                    <i class="fas fa-plus"></i> Crear Primer Empleado
+                </a>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}

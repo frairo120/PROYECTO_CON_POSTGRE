@@ -1,0 +1,78 @@
+{% extends 'home.html' %}
+<title>{% block title %}{{title1}}{% endblock %}</title>
+{% block content %}
+    {% load static %}
+    {% include 'fragments/messages.html' %}
+    
+    <section class="dark:bg-principal mt-2">
+        <div class="text-center" data-aos="fade-up" data-aos-delay="200">
+            <div class="sm:pt-8 lg:pt-4">
+                <h1 class="rounded-2xl bg-indigo-500 px-2 py-1 text-white uppercase text-4xl">
+                    {{ title1 }}
+                </h1>
+            </div>
+            
+            <div class="lg:p-2 rounded-3xl max-w-6xl mx-auto" data-aos="fade-up" data-aos-delay="200">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="bg-white dark:bg-[#0b1121] rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                            Grupo: {{ group.name }}
+                        </h2>
+                        
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full">
+                                {{ group.permissions.count }} permisos actuales
+                            </span>
+                            
+                            <div>
+                                <a href="{% url 'security:group_list' %}" 
+                                   class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full mr-2">
+                                    Cancelar
+                                </a>
+                                <button type="submit" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full">
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            {% for app_label, permissions in grouped_permissions.items %}
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                <div class="bg-gray-100 dark:bg-gray-800 px-4 py-3">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100">
+                                        {{ app_label|capfirst }}
+                                    </h3>
+                                </div>
+                                
+                                <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {% for perm in permissions %}
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input id="perm-{{ perm.id }}" name="permissions" type="checkbox" 
+                                                   value="{{ perm.id }}"
+                                                   class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                                   {% if perm.id in current_permissions %}checked{% endif %}>
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="perm-{{ perm.id }}" class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ perm.name }}
+                                            </label>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {{ perm.codename }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

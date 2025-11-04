@@ -1,0 +1,167 @@
+/* static/css/permiso_form_minimal.css */
+/* DISEÑO MINIMALISTA PARA FORMULARIO DE PERMISO DE GRUPO */
+/* Limpio, profesional, accesible y 100% responsive */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #f5f7fa;
+    color: #2d3748;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Tarjeta principal */
+.card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: white;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+/* Cabecera */
+.card-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    padding: 1.5rem;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+/* Cuerpo */
+.card-body {
+    padding: 2rem;
+}
+
+/* Etiquetas */
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+/* Campos de formulario */
+.form-control, .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #f8fafc;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+    background: white;
+    outline: none;
+}
+
+/* Texto de ayuda */
+.form-text {
+    color: #718096;
+    font-size: 0.875rem;
+    margin-top: 0.4rem;
+}
+
+/* Errores */
+.text-danger, .alert-danger {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    color: #e53e3e;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Botones */
+.btn {
+    padding: 0.75rem 1.8rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+/* Contenedor de botones */
+.d-flex {
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    .d-flex {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+    }
+    .card-header h4 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.5s ease-out;
+}

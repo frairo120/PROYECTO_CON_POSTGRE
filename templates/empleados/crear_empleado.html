@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Editar Empleado{% else %}Nuevo Empleado{% endif %} | SD-EPP
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/crear_empleado.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="page-header">
+        <a href="{% url 'deteccion:lista_empleados' %}" class="back-button">
+            <i class="fas fa-arrow-left"></"></i>
+            <span>Volver</span>
+        </a>
+        <h1 class="page-title">
+            <i class="fas fa-user-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i>
+            {% if form.instance.pk %}Editar Empleado{% else %}Nuevo Empleado{% endif %}
+        </h1>
+        <div class="header-actions">
+            <button type="submit" form="empleado-form" class="btn-primary">
+                <i class="fas fa-save"></i>
+                <span>Guardar</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="card-body">
+            <form id="empleado-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Foto de Perfil -->
+                <div class="profile-section text-center mb-5">
+                    <div class="profile-avatar">
+                        {% if form.instance.foto and form.instance.foto.url %}
+                            <img src="{{ form.instance.foto.url }}" alt="Foto de {{ form.instance.nombre_completo }}" class="avatar-img">
+                        {% else %}
+                            <div class="avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <label for="{{ form.foto.id_for_label }}" class="btn-upload mt-3">
+                        <i class="fas fa-camera"></i> Cambiar Foto
+                    </label>
+                    {{ form.foto }}
+                </div>
+
+                <!-- Errores globales -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <strong>Errores del formulario:</strong>
+                        <ul class="mb-0">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Campos en 2 columnas -->
+                <div class="form-grid">
+                    {% for field in form %}
+                        {% if field.name != 'activo' and field.name != 'foto' %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">
+                                    <i class="fas fa-{{ field.label|lower|cut:' '|slugify|slice:':10' }}"></i>
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="required">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="help-text">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <small class="error-text">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Checkbox Activo -->
+                <hr class="my-4">
+                <div class="checkbox-group">
+                    {{ form.activo }}
+                    <label for="{{ form.activo.id_for_label }}" class="checkbox-label">
+                        <i class="fas fa-toggle-on"></i>
+                        <strong>Empleado Activo</strong>
+                        <span class="text-muted">(Desmarcar si ya no labora)</span>
+                    </label>
+                    {% for error in form.activo.errors %}
+                        <small class="error-text d-block">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- Botones -->
+                <div class="form-actions">
+                    <a href="{% url 'deteccion:lista_empleados' %}" class="btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        {% if form.instance.pk %}Actualizar{% else %}Crear{% endif %} Empleado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,136 @@
+/* --- ESTILOS GENERALES DE LA TARJETA --- */
+.form-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.form-card .card-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #f8f9fa;
+}
+
+.form-card .card-header h2 {
+    margin-bottom: 5px;
+    color: #343a40;
+}
+
+.form-card .card-body {
+    padding: 30px;
+}
+
+/* --- ESTILOS PARA LA CUADRÍCULA DE CAMPOS --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- ESTILOS PARA SECCIONES DE ANCHO COMPLETO (Permisos y Contraseña) --- */
+.full-width-section {
+    grid-column: 1 / -1; 
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 2px solid #e9ecef; /* Separador claro */
+}
+
+.permissions-section h3, .password-section h3 {
+    font-size: 1.3rem;
+    color: #1c3d70;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    border-left: 4px solid #4CAF50;
+    padding-left: 10px;
+}
+
+/* --- DISEÑO DE CHECKBOXES BOOLEANOS (Activo, Staff, Superusuario) --- */
+.permission-checkboxes-container {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    border: 1px dashed #ced4da; /* Borde suave */
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.form-group-checkbox .form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-right: 10px;
+}
+
+/* --- DISEÑO DE GRUPOS (Selección Múltiple) --- */
+.groups-field {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    border: 1px solid #eee;
+}
+
+.groups-label {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 15px !important;
+    display: flex;
+    align-items: center;
+}
+
+.groups-label i {
+    margin-right: 8px;
+    color: #4CAF50;
+}
+
+/* Lista de grupos */
+.checkbox-group-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 15px 40px; 
+}
+
+/* --- ESTILOS DE ACCIÓN DEL FOOTER --- */
+.form-actions-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 20px 30px;
+    border-top: 1px solid #f0f0f0;
+    background-color: #f8f9fa;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.btn-info-custom {
+    background-color: #17a2b8;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.btn-info-custom:hover {
+    background-color: #138496;
+}

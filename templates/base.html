@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SD-EPP | Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/prueba.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% csrf_token %}
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="{% static 'img/logo.png' %}" alt="Logo SD-EPP" class="sidebar-logo">
+            </div>
+            
+             <div class="sidebar-section">
+                    <p class="section-title">Navegación Principal</p>
+
+                    <a href="{% url 'deteccion:inicio' %}" class="nav-button">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Inicio </span>
+                    </a>
+                </div>
+
+            <div class="sidebar-section">
+                {% block sidebar_static_modules %}
+                    {% endblock %}
+            </div>
+                
+            {% if user.is_authenticated and menu_list %}
+            <div class="sidebar-section">
+                <p class="section-title">Accesos Personalizados</p>
+                {% for menu_item in menu_list %}
+                    <div class="menu-block">
+                        <div class="menu-title-small">{{ menu_item.menu.name }}</div>
+                        {% for module_permission in menu_item.group_module_permission_list %}
+                            {% with module=module_permission.module %}
+                                {% if module.url %}
+                                    <a href="{{ module.url }}" class="nav-button submodule">
+                                        {% if module.icon %}
+                                            <i class="{{ module.icon }}"></i>
+                                        {% else %}
+                                            <i class="fas fa-th-large"></i>
+                                        {% endif %}
+                                        <span>{{ module.name }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <div class="user-info">
+                    <img src="{% static 'img/perfil.jpg' %}" alt="Foto de Perfil" class="user-profile-pic"> 
+                    <span>Bienvenido <strong>{% if user.is_authenticated %}{{ user.first_name|default:user.username }}{% endif %}</strong></span>
+                </div>
+                <div class="header-actions">
+                    <button class="notification-button">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span> 
+                    </button>
+                    
+                    <form id="logout-form" action="{% url 'deteccion:logout' %}" method="post" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <button type="submit" class="logout-button" onclick="document.getElementById('logout-form').submit(); return false;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-area">
+                {% block content %}
+                    {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Navegación activa (copiado de inicio.html, aunque la lógica completa
+        // para establecer la clase 'active' para el enlace actual
+        // debería hacerse preferiblemente en el servidor o con JS más avanzado)
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remueve 'active' de todos (comportamiento de botón, no de navegación)
+                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                // Añade 'active' al que fue clickeado
+                this.classList.add('active');
+            });
+        });
+
+        // Evento de notificación (copiado de inicio.html)
+        document.querySelector('.notification-button').addEventListener('click', () => {
+            alert('Mostrando notificaciones');
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
