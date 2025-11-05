@@ -243,3 +243,6 @@ class Empleado(models.Model):
         ordering = ['apellidos', 'nombres']
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
+
+
+

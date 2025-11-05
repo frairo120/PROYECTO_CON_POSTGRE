@@ -47,9 +47,9 @@ class DroidCamera:
 
     def start_recording(self, frame):
         if not self.is_recording:
-            os.makedirs('grabaciones', exist_ok=True)
+            os.makedirs('media/grabaciones', exist_ok=True)
             timestamp = time.strftime('%Y%m%d_%H%M%S')
-            filename = f'grabaciones/recording_{timestamp}.avi'
+            filename = f'media/grabaciones/recording_{timestamp}.avi'
             self.current_recording_filename = filename
             height, width = frame.shape[:2]
             fourcc = cv2.VideoWriter_fourcc(*'MJPG') 

@@ -35,8 +35,6 @@ class CargoForm(forms.ModelForm):
         fields = ['nombre', 'descripcion', 'activo'] 
 
 class EmpleadoForm(forms.ModelForm):
-    # Ya no necesitamos COMMON_WIDGET_ATTRS como atributo de clase
-    
     class Meta:
         model = Empleado
         fields = [
@@ -51,24 +49,55 @@ class EmpleadoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # 1. Iterar sobre todos los campos para aplicar la clase CSS
-        for name, field in self.fields.items():
+        for field_name, field in self.fields.items():
             
             # Excluir el campo 'activo' porque es un CheckboxInput y usa diferente estilo
-            if name != 'activo':
-                
+            if field_name != 'activo':
                 # 2. Aplicar la clase 'form-control' a la mayoría de los widgets
                 # setdefault se asegura de que si ya tiene una clase, la mantenga y añada 'form-control'
                 field.widget.attrs.setdefault('class', 'form-control')
 
             # 3. Personalizar campos de fecha para usar el selector nativo HTML5
-            if name in ['fecha_nacimiento', 'fecha_ingreso']:
+            if field_name in ['fecha_nacimiento', 'fecha_ingreso']:
                 field.widget.attrs.update({'type': 'date'})
 
             # 4. Aplicar Placeholder para campos de texto y número
-            if isinstance(field.widget, forms.TextInput) or isinstance(field.widget, forms.NumberInput):
-                 field.widget.attrs.setdefault('placeholder', field.label)
+            if isinstance(field.widget, (forms.TextInput, forms.NumberInput)):
+                field.widget.attrs.setdefault('placeholder', field.label)
 
-## Solo debe quedar la definición correcta de UserForm con get_user_model()
+            # 5. Personalizar el campo 'activo' (checkbox)
+            if field_name == 'activo':
+                field.widget.attrs.update({'class': 'form-check-input'})
+
+        # 6. Personalización específica para campos particulares
+        self.fields['user'].queryset = get_user_model().objects.filter(empleado__isnull=True)
+        self.fields['user'].empty_label = "--- Seleccione un usuario ---"
+        
+        self.fields['sueldo'].widget.attrs.update({
+            'min': '0',
+            'step': '0.01'
+        })
+
+    def clean_cedula_ecuatoriana(self):
+        cedula = self.cleaned_data.get('cedula_ecuatoriana')
+        # Aquí puedes agregar validaciones adicionales si es necesario
+        return cedula
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cedula_ecuatoriana = cleaned_data.get('cedula_ecuatoriana')
+        dni = cleaned_data.get('dni')
+        
+        # Validar que al menos uno de los dos documentos esté presente
+        if not cedula_ecuatoriana and not dni:
+            raise forms.ValidationError(
+                "Debe proporcionar al menos uno de los documentos: Cédula ecuatoriana o DNI internacional."
+            )
+        
+        return cleaned_data
+
+
+class UserForm(forms.ModelForm):
     password1 = forms.CharField(
         label='Contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
@@ -80,11 +109,27 @@ class EmpleadoForm(forms.ModelForm):
         required=False
     )
 
-    
     class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 
-                  'password1', 'password2', 'is_active', 'is_staff', 'is_superuser','groups']
+        model = get_user_model()
+        fields = [
+            'username', 'first_name', 'last_name', 'email', 
+            'password1', 'password2', 'is_active', 'is_staff', 
+            'is_superuser', 'groups'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Aplicar clases a los campos del UserForm
+        for field_name, field in self.fields.items():
+            if field_name not in ['is_active', 'is_staff', 'is_superuser']:
+                field.widget.attrs.setdefault('class', 'form-control')
+            else:
+                # Para checkboxes
+                field.widget.attrs.setdefault('class', 'form-check-input')
+        
+        # Personalizar el campo groups
+        self.fields['groups'].widget.attrs.update({'class': 'form-select'})
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -102,10 +147,8 @@ class EmpleadoForm(forms.ModelForm):
             user.set_password(password)
         if commit:
             user.save()
+            self.save_m2m()  # Importante para guardar relaciones ManyToMany como 'groups'
         return user
-
-
-
 
 class UserPasswordChangeForm(SetPasswordForm):
     new_password1 = forms.CharField(

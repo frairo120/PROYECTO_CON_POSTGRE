@@ -13,16 +13,13 @@
     {% csrf_token %}
     <div class="dashboard-container">
         
-        <!-- ========== SIDEBAR ========== -->
         <aside class="sidebar">
             <div class="logo-area">
                 <img src="{% static 'img/logo.png' %}" alt="Logo SD-EPP" class="sidebar-logo">
             </div>
-            <!-- Módulos Estáticos -->
             <div class="sidebar-section">
             </div>
                 
-            <!-- Módulos Dinámicos (por permisos) -->
             {% if user.is_authenticated and menu_list %}
             <div class="sidebar-section">
                 <p class="section-title">Accesos Personalizados</p>
@@ -47,16 +44,13 @@
                 {% endfor %}
             </div>
             {% endif %}
-            
-
         </aside>
 
-        <!-- ========== MAIN CONTENT ========== -->
         <main class="main-content">
             <header class="main-header">
                 <div class="user-info">
                     <img src="{% static 'img/perfil.jpg' %}" alt="Foto de Perfil" class="user-profile-pic"> 
-                    <span>Bienvenido <strong></strong></span>
+                    <span>Bienvenido <strong>{{ user.username }}</strong></span>
                 </div>
                 <div class="header-actions">
                     <button class="notification-button">
@@ -74,80 +68,87 @@
                 </div>
             </header>
 
-                <!-- Cámara y Notificaciones -->
-                <section class="cards-container">
-                    <div class="card camera-card">
-                        <h2><i class="fas fa-video"></i> Cámara en vivo</h2>
-                        <div class="video-placeholder">
-                            <img id="video-feed" style="display: none;" alt="Cámara en vivo" class="video-feed">
-                            <div id="camera-status" style="text-align: center; padding: 20px; color: #ccc;">
-                                Cámara apagada
+            <section class="cards-container">
+                <div class="card camera-card">
+                    <h2><i class="fas fa-video"></i> Cámara en vivo</h2>
+                    <div class="video-placeholder">
+                        <img id="video-feed" style="display: none;" alt="Cámara en vivo" class="video-feed">
+                        <div id="camera-status" style="text-align: center; padding: 20px; color: #ccc;">
+                            Cámara apagada
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <div style="display: flex; gap: 10px; flex: 1;">
+                            <select id="camera-type" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="pc">Cámara PC</option>
+                                <option value="droidcam">DroidCam</option>
+                            </select>
+                            <div id="droidcam-settings" style="display: none; display: flex; gap: 5px;">
+                                <input type="text" id="droidcam-ip" placeholder="IP" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 100px;">
+                                <input type="text" id="droidcam-port" placeholder="Puerto" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 70px;">
                             </div>
                         </div>
-                        <div class="camera-controls">
-                            <div style="display: flex; gap: 10px; flex: 1;">
-                                <select id="camera-type" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
-                                    <option value="pc">Cámara PC</option>
-                                    <option value="droidcam">DroidCam</option>
-                                </select>
-                                <div id="droidcam-settings" style="display: none; display: flex; gap: 5px;">
-                                    <input type="text" id="droidcam-ip" placeholder="IP" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 100px;">
-                                    <input type="text" id="droidcam-port" placeholder="Puerto" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 70px;">
-                                </div>
-                            </div>
-                            <button class="control-button fullscreen-btn">
-                                <i class="fas fa-expand"></i> <span>Pantalla completa</span>
-                            </button>
-                            <button class="control-button toggle-camera" data-status="off">
-                                <i class="fas fa-power-off"></i> <span>Encender</span>
-                            </button>
-                            <a href="{% url 'deteccion:grabaciones' %}" class="control-button">
-                                <i class="fas fa-history"></i> <span>Grabaciones</span>
-                            </a>
-                        </div>
+                        <button class="control-button fullscreen-btn">
+                            <i class="fas fa-expand"></i> <span>Pantalla completa</span>
+                        </button>
+                        <button class="control-button toggle-camera" data-status="off">
+                            <i class="fas fa-power-off"></i> <span>Encender</span>
+                        </button>
+                        <a href="{% url 'deteccion:grabaciones' %}" class="control-button">
+                            <i class="fas fa-history"></i> <span>Grabaciones</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card notifications-card">
+                    <h2><i class="fas fa-bell"></i> Notificaciones recientes</h2>
+                    
+                    <div style="text-align: right; margin-bottom: 10px;">
+                        <button class="refresh-button" id="clear-alerts-btn">
+                            <i class="fas fa-archive"></i> <span>Archivar Vistas</span> 
+                        </button>
                     </div>
 
-                    <div class="card notifications-card">
-                        <h2><i class="fas fa-bell"></i> Notificaciones recientes</h2>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ALERTA</th>
-                                    <th>HORA</th>
-                                    <th>VIDEO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if alerts %}
-                                    {% for a in alerts %}
-                                        <tr>
-                                            <td>
-                                                <span class="alert-badge alert-{{ a.level }}">{{ a.message }}</span>
-                                            </td>
-                                            <td>{{ a.timestamp|date:"H:i:s d-m-Y" }}</td>
-                                            <td>
-                                                {% if a.video %}
-                                                    <a href="/{{ a.video }}" target="_blank">Ver</a>
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ALERTA</th>
+                                <th>HORA</th>
+                                <th>VIDEO</th>
+                                <th>NIVEL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if alerts %}
+                                {% for a in alerts %}
                                     <tr>
-                                        <td colspan="3">No hay alertas recientes</td>
+                                        <td>
+                                            <span class="alert-badge alert-{{ a.level }}">{{ a.message }}</span>
+                                        </td>
+                                        <td>{{ a.timestamp|date:"H:i:s d-m-Y" }}</td>
+                                        <td>
+                                            {% if a.video %}
+                                                <a href="{% url 'deteccion:incunplimiento' a.pk %}" target="_blank">Ver</a>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ a.level|title }}</td>
                                     </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4">No hay alertas recientes</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
         </main>
     </div>
 
-    <!-- Scripts -->
     <script>
         // Navegación activa
         document.querySelectorAll('.nav-button').forEach(button => {
@@ -217,5 +218,72 @@
             alert('Mostrando notificaciones');
         });
     </script>
+    
+    <script>
+let alertInterval; // Variable global para almacenar el ID del intervalo
+const REFRESH_RATE = 5000; // 5 segundos
+
+// ------------------------------------------------------------------
+// A. FUNCIÓN PARA CARGAR (AJAX)
+// ------------------------------------------------------------------
+function fetchAlerts() {
+    fetch("{% url 'deteccion:latest_alerts' %}")
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('.notifications-card tbody');
+            
+            // 🎯 Solo limpiar el tbody si hay alertas nuevas o si la tabla no tiene el mensaje de 'No hay'
+            if (data.alerts.length > 0 || tbody.innerHTML.includes('No hay alertas recientes') === false) {
+                 tbody.innerHTML = "";  
+            }
+           
+            if (data.alerts.length > 0) {
+                data.alerts.forEach(a => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="alert-badge alert-${a.level}">${a.message}</span></td>
+                        <td>${a.timestamp}</td>
+                        <td> ${a.video ? `<a href="{% url 'deteccion:incunplimiento' 0 %}".replace('/0/', '/${a.id}/')" target="_blank">Ver</a>` : '-'}</td>
+                        <td>${a.level.charAt(0).toUpperCase() + a.level.slice(1)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (tbody.children.length === 0) {
+                 // Si la tabla está vacía Y el servidor no devolvió alertas, mostrar mensaje
+                tbody.innerHTML = `<tr><td colspan="4">No hay alertas recientes</td></tr>`;
+            }
+        })
+        .catch(err => console.error("Error al obtener alertas:", err));
+}
+
+// ------------------------------------------------------------------
+// B. FUNCIÓN PARA LIMPIAR (ACCION DEL BOTÓN)
+// ------------------------------------------------------------------
+function clearAlerts() {
+    const tbody = document.querySelector('.notifications-card tbody');
+    
+    // 1. Limpiar visualmente la tabla y mostrar el mensaje de "vacío"
+    tbody.innerHTML = `<tr><td colspan="4">No hay alertas recientes</td></tr>`;
+    
+    // 2. Detener la recarga automática temporalmente
+    clearInterval(alertInterval);
+
+    // 3. Reanudar la recarga automática
+    alertInterval = setInterval(fetchAlerts, REFRESH_RATE);
+}
+
+
+// ------------------------------------------------------------------
+// C. INICIALIZACIÓN Y EVENTOS
+// ------------------------------------------------------------------
+
+// 1. Asignar la función clearAlerts al botón
+document.getElementById('clear-alerts-btn').addEventListener('click', clearAlerts);
+
+// 2. Iniciar la recarga automática
+alertInterval = setInterval(fetchAlerts, REFRESH_RATE);
+fetchAlerts(); // Cargar al inicio
+</script>
+
 </body>
 </html>

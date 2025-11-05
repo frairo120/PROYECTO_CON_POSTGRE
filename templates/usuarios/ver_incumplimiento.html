@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/form_general.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="content-area">
+    <div class="container mt-5">
+        <h1>{{ title }}</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3>Detalles del Incumplimiento</h3>
+                <p><strong>Fecha/Hora:</strong> {{ incumplimiento.timestamp|date:"Y-m-d H:i:s" }}</p>
+                <p><strong>Tipo de Incumplimiento:</strong> {{ incumplimiento.tipo_alerta }}</p>
+                </div>
+        </div>
+
+        <div class="card video-card">
+            <div class="card-header">
+                <i class="fas fa-video"></i> Evidencia en Video
+            </div>
+            <div class="card-body video-embed-container">
+                
+                {% if video_url %}
+                    <video controls class="video-reproductor">
+                        <source src="{{ video_url }}" type="video/mp4"> 
+                        Tu navegador no soporta la etiqueta de video.
+                    </video>
+                {% else %}
+                    <p class="text-danger">No se pudo cargar la evidencia de video.</p>
+                {% endif %}
+                
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'deteccion:alert_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a la lista
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

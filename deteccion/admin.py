@@ -10,7 +10,8 @@ from .models import (
     GroupModulePermission, 
     User, 
     Cargo, 
-    Empleado
+    Empleado,
+    Alert
 )
 
 # --- 1. Definir la clase Admin para el modelo User personalizado ---
@@ -57,6 +58,15 @@ class EmpleadoAdmin(admin.ModelAdmin):
     search_fields = ('nombres', 'apellidos', 'cedula_ecuatoriana')
 
 
+class AlertAdmin(admin.ModelAdmin):
+    list_display = ('message', 'level', 'timestamp', 'resolved')  # columnas que se verán en la lista
+    list_filter = ('level', 'resolved', 'timestamp')  # filtros en la barra lateral
+    search_fields = ('message', 'missing')  # barra de búsqueda
+    readonly_fields = ('timestamp',)  # campo solo lectura
+
+
+
+
 # --- 3. Registrar los modelos en el sitio de administración ---
 
 # Desregistrar el usuario por defecto (si estaba registrado) y registrar el tuyo
@@ -72,3 +82,4 @@ admin.site.register(GroupModulePermission)
 admin.site.register(Cargo)
 admin.site.register(Empleado, EmpleadoAdmin)
 # Register your models here.
+admin.site.register(Alert, AlertAdmin)

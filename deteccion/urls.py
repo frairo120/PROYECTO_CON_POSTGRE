@@ -17,6 +17,12 @@ urlpatterns = [
     path('video_feed/', views.video_feed, name='video_feed'),
     path('toggle_camera/', views.toggle_camera, name='toggle_camera'),
     path('grabaciones/', views.grabaciones, name='grabaciones'),
+
+    path('inicio/alerts/', views.alert_list, name='alert_data'),
+    path('inicio/alerts/list/', views.alert_list_page, name='alert_list'),
+    path('inicio/latest-alerts/', views.latest_alerts, name='latest_alerts'),
+    
+    path('inicio/incunplimiento/<int:incumplimiento_id>/', views.ver_incumplimiento, name='incunplimiento'),
     # URLs para Cargo
     path('cargos/', views.CargoListView.as_view(), name='cargo_list'),
     path('cargos/new/', views.CargoCreateView.as_view(), name='cargo_create'),
@@ -26,8 +32,8 @@ urlpatterns = [
     # URLs para Empleado
     path('inicio/empleados/', views.EmpleadoListView.as_view(), name='lista_empleados'),
     path('inicio/empleados/new/', views.EmpleadoCreateView.as_view(), name='crear_empleado'),
-    path('empleados/edit/<int:pk>/', views.EmpleadoUpdateView.as_view(), name='empleado_editar'),
-    path('empleados/delete/<int:pk>/', views.EmpleadoDeleteView.as_view(), name='empleado_eliminar'),
+    path('inicio/empleados/edit/<int:pk>/', views.EmpleadoUpdateView.as_view(), name='empleado_editar'),
+    path('inicio/empleados/delete/<int:pk>/', views.EmpleadoDeleteView.as_view(), name='empleado_eliminar'),
 
     # URLs para Menu y Module (ejemplo de lista)
     path('inicio/menus/', views.MenuListView.as_view(), name='menu_list'),
@@ -59,7 +65,7 @@ urlpatterns = [
 
 
     # URL de Creación de Usuarios (usando tu vista basada en función)
-    path('usuarios/crear/', views.usercreate, name='user_create'), 
+    path('usuarios/crear/', views.usercreate, name='user_create'),
     
 ]
 if settings.DEBUG:

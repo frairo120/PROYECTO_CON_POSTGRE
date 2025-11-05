@@ -7,7 +7,7 @@ from .droidcam import DroidCamera
 import json
 # Global camera instance
 camera = None  # Se inicializará cuando se seleccione el tipo de cámara
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy,reverse
 from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required,user_passes_test
@@ -19,6 +19,10 @@ from .models import Menu, Module, Cargo, Empleado, GroupModulePermission,User, A
 from .forms import MenuForm, ModuleForm, CargoForm, EmpleadoForm, LoginForm, GroupForm, GroupModulePermissionForm
 from .forms import UserForm,UserEditForm,UserPasswordChangeForm
 from django.db.models import Prefetch
+
+from django.utils import timezone
+from datetime import timedelta
+from django.utils.timezone import localtime
 
 class MenuContextMixin:
     """Mixin para agregar el contexto de menús y módulos a las vistas."""
@@ -104,6 +108,60 @@ def grabaciones(request):
     """Muestra la página con el listado de grabaciones."""
     return render(request, 'deteccion/grabaciones.html')
 
+
+
+
+def alert_list(request):
+    # Obtenemos alertas no resueltas de las últimas 24 horas
+    since = timezone.now() - timedelta(hours=24)
+    alerts = Alert.objects.filter(timestamp__gte=since, resolved=False).order_by('-timestamp')
+    
+    data = []
+    for alert in alerts:
+        data.append({
+            'id': alert.id,
+            'message': alert.message,
+            'missing': alert.missing,
+            'level': alert.get_level_display(),
+            'video_url': alert.video.url if alert.video else '',
+            'timestamp': alert.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    return JsonResponse({'alerts': data})
+
+
+def alert_list_page(request):
+    context = {}
+    menu_context = MenuContextMixin().get_menu_context(request.user)
+    context['menu_list'] = menu_context
+    context['title'] = "Alertas Activas"
+    return render(request, 'usuarios/alert_list_ajax.html', context)
+
+
+
+
+def latest_alerts(request):
+    alerts = Alert.objects.order_by('-timestamp')[:10]   # últimas 10
+
+    alert_data = [
+        {
+            'id': a.pk,
+            'message': a.message,
+            'timestamp': localtime(a.timestamp).strftime("%H:%M:%S %d-%m-%Y"), 
+            'video': a.video.url if a.video else None, 
+            'level': a.level,
+        }
+        for a in alerts
+    ]
+    
+    return JsonResponse({"alerts": alert_data})
+ 
+
+
+
+
+
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser or u.is_staff, login_url='/')
 def usercreate(request):
@@ -187,7 +245,7 @@ def user_delete(request, pk):
         full_name = user.get_full_name
         user.delete()
         messages.success(request, f'El usuario {full_name} ha sido eliminado exitosamente.')
-        return redirect('deteccion:user_list')
+        return redirect('deteccion:user_data')
 
     # Si no es POST, mostrar la página de confirmación
     context = {
@@ -712,5 +770,62 @@ class GroupPermissionsView(TemplateView):
             return redirect('security:group_permissions', pk=group.id)
         
 
+
+
+import boto3
+from django.shortcuts import render, get_object_or_404
+from datetime import timedelta
+
+# Asegúrate de tener tu modelo de Incumplimiento que apunta a Cloud Storage
+# from .models import Incumplimiento # (Asumiendo que tienes un modelo similar)
+BUCKET_NAME = 'mi-bucket-local' # 👈 Cambia este nombre al de tu bucket en LocalStack
+LOCALSTACK_ENDPOINT = 'http://localhost:4566' 
+
+def ver_incumplimiento(request, incumplimiento_id):
+    """Muestra los detalles de un incumplimiento, incluyendo el video usando LocalStack S3."""
+    
+    # 1. Obtener la instancia del incumplimiento (usando Alert como corregimos antes)
+    incumplimiento = get_object_or_404(Alert, pk=incumplimiento_id)
+    
+    # 2. Inicializar el cliente Boto3 apuntando a LocalStack
+    # LocalStack acepta credenciales dummy como 'test'.
+    s3_client = boto3.client(
+        's3',
+        # URL que apunta al servicio S3 en tu contenedor LocalStack
+        endpoint_url=LOCALSTACK_ENDPOINT,  
+        aws_access_key_id='test',
+        aws_secret_access_key='test',
+        region_name='us-east-1' # Región dummy requerida por Boto3
+    )
+    
+    # 3. La clave del objeto es la ruta guardada en la BD
+    object_key = f'grabaciones/{incumplimiento.video}'
+    
+    # 4. Generar la URL pre-firmada (método de Boto3)
+    try:
+        video_url_firmada = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': BUCKET_NAME,
+                'Key': object_key,
+                # Esto emula el 'response_disposition=inline' de GCS
+                'ResponseContentDisposition': 'inline' 
+            },
+            # Duración de la URL en segundos (30 minutos)
+            ExpiresIn=1800 
+        )
+    except Exception as e:
+        print(f"Error al acceder al video en LocalStack: {e}")
+        # Si usas messages en Django, puedes añadir:
+        # messages.error(request, "El video no pudo ser encontrado en el almacenamiento local.")
+        video_url_firmada = None 
+        
+    context = {
+        'incumplimiento': incumplimiento,
+        'video_url': video_url_firmada,
+        'title': f'Incumplimiento ID: {incumplimiento_id}'
+    }
+    
+    return render(request, 'usuarios/ver_incumplimiento.html', context)
 
 
