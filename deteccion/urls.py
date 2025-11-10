@@ -103,8 +103,9 @@ urlpatterns = [
     path('inicio/detalle/capacitaciones/<int:pk>/', admin_views.detalle_capacitacion, name='detalle_capacitacion'),
     path('capacitaciones/iniciar/<int:capacitacion_id>/', admin_views.iniciar_capacitacion, name='iniciar_capacitacion'),
 
+##reportes
 
-
+    path('inicio/reportes/', views.alerts_report_view, name='reportes'),
 
 ]
 if settings.DEBUG:

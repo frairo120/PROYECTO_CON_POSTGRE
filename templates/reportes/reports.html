@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes de Alertas - Sistema de Seguridad{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header del Reporte -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2">📊 Reportes de Alertas</h1>
+            <p class="text-muted mb-0">Estadísticas e insights del sistema de detección</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+           
+        </div>
+    </div>
+
+    <!-- Filtros de Fechas -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">🕐 Filtros de Fecha</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                           value="{{ start_date_input }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                           value="{{ end_date_input }}" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                </div>
+            </form>
+            <div class="mt-2">
+                <small class="text-muted">
+                    Período: {{ start_date_input }} al {{ end_date_input }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen Estadístico -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📈 Resumen Estadístico</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Total Alertas -->
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title">{{ summary.total_alerts|default:0 }}</h3>
+                                    <p class="card-text mb-0">Total Alertas</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alertas de Alta -->
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title">{{ summary.high_alerts|default:0 }}</h3>
+                                    <p class="card-text mb-0">Alta Prioridad</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alertas Resueltas -->
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title">{{ summary.resolved_alerts|default:0 }}</h3>
+                                    <p class="card-text mb-0">Resueltas</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Incumplimientos Reales -->
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title">{{ summary.non_compliant_alerts|default:0 }}</h3>
+                                    <p class="card-text mb-0">Incumplimientos Reales</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas Detalladas -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Distribución por Nivel</h6>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-danger" style="width: {% widthratio summary.high_alerts summary.total_alerts 100 %}%">
+                                    Alta: {{ summary.high_alerts|default:0 }}
+                                </div>
+                                <div class="progress-bar bg-warning" style="width: {% widthratio summary.medium_alerts summary.total_alerts 100 %}%">
+                                    Media: {{ summary.medium_alerts|default:0 }}
+                                </div>
+                                <div class="progress-bar bg-info" style="width: {% widthratio summary.low_alerts summary.total_alerts 100 %}%">
+                                    Baja: {{ summary.low_alerts|default:0 }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Tasa de Resolución</h6>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-success" style="width: {% widthratio summary.resolved_alerts summary.total_alerts 100 %}%">
+                                    Resueltas: {{ summary.resolved_alerts|default:0 }}
+                                </div>
+                                <div class="progress-bar bg-secondary" style="width: {% widthratio summary.unresolved_alerts summary.total_alerts 100 %}%">
+                                    Pendientes: {{ summary.unresolved_alerts|default:0 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfica de Elementos de Protección -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📊 Frecuencia de Elementos Faltantes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="elementosChart" height="250"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Resumen de Elementos</h6>
+                                    <div id="elementosResumen">
+                                        <!-- Se llena dinámicamente con JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 10 Elementos Problemáticos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">🚨 Top 10 Elementos Más Problemáticos</h5>
+                    <span class="badge bg-danger">Incumplimientos Reales</span>
+                </div>
+                <div class="card-body">
+                    {% if top_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="topItemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Elemento de Protección</th>
+                                    <th>Veces que ha Faltado</th>
+                                    <th>Frecuencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in top_items %}
+                                <tr>
+                                    <td class="fw-bold">{{ forloop.counter }}</td>
+                                    <td>
+                                        <span class="badge bg-primary me-2">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </span>
+                                        {{ item.missing|default:"Elemento no especificado" }}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-danger">{{ item.count }}</span> veces
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-danger" 
+                                                 style="width: {% widthratio item.count top_items.0.count 100 %}%">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            {% widthratio item.count top_items.0.count 100 %}% del máximo
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>¡Excelentes noticias!</h5>
+                        <p class="text-muted">No se han identificado elementos problemáticos recurrentes en este período.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights y Recomendaciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">💡 Insights y Recomendaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Análisis de Seguridad</h6>
+                            <ul class="list-unstyled">
+                                {% if summary.high_alerts and summary.high_alerts > 10 %}
+                                <li class="mb-2">
+                                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                    <strong>Alerta:</strong> Alto número de incidencias críticas
+                                </li>
+                                {% endif %}
+                                
+                                {% if top_items and top_items.0.count > 5 %}
+                                <li class="mb-2">
+                                    <i class="fas fa-helmet-safety text-warning me-2"></i>
+                                    <strong>Prioridad:</strong> {{ top_items.0.missing }} requiere atención inmediata
+                                </li>
+                                {% endif %}
+                                
+                                {% if summary.resolved_alerts and summary.resolved_alerts|length > summary.total_alerts|length|add:"0"|divisibleby:2 %}
+                                <li class="mb-2">
+                                    <i class="fas fa-chart-line text-success me-2"></i>
+                                    <strong>Eficiencia:</strong> Buena tasa de resolución de alertas
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Acciones Recomendadas</h6>
+                            <ul class="list-unstyled">
+                                {% if top_items %}
+                                <li class="mb-2">
+                                    <i class="fas fa-bullseye text-primary me-2"></i>
+                                    Reforzar verificación de: {{ top_items.0.missing }}
+                                </li>
+                                {% endif %}
+                                
+                                <li class="mb-2">
+                                    <i class="fas fa-training text-info me-2"></i>
+                                    Capacitación en uso correcto de EPP
+                                </li>
+                                
+                                <li class="mb-2">
+                                    <i class="fas fa-chart-bar text-success me-2"></i>
+                                    Monitorear tendencias semanalmente
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Incluir Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Datos de ejemplo para la gráfica (debes reemplazar con datos reales de tu backend)
+const elementosData = {
+    'casco': {{ summary.casco_count|default:15 }},
+    'chaleco': {{ summary.chaleco_count|default:12 }},
+    'botas': {{ summary.botas_count|default:8 }}
+};
+
+// Colores para la gráfica
+const colores = {
+    casco: '#FF6384',    // Rojo
+    chaleco: '#36A2EB',  // Azul
+    botas: '#FFCE56'     // Amarillo
+};
+
+// Iconos para cada elemento
+const iconos = {
+    casco: '⛑️',
+    chaleco: '🦺',
+    botas: '👢'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración de la gráfica de barras
+    const ctx = document.getElementById('elementosChart').getContext('2d');
+    const elementosChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Casco', 'Chaleco', 'Botas'],
+            datasets: [{
+                label: 'Veces que ha faltado',
+                data: [
+                    elementosData.casco,
+                    elementosData.chaleco, 
+                    elementosData.botas
+                ],
+                backgroundColor: [
+                    colores.casco,
+                    colores.chaleco,
+                    colores.botas
+                ],
+                borderColor: [
+                    colores.casco,
+                    colores.chaleco,
+                    colores.botas
+                ],
+                borderWidth: 1,
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Frecuencia de Elementos Faltantes',
+                    font: {
+                        size: 16
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Faltó ${context.parsed.y} veces`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Veces'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Elementos de Protección'
+                    }
+                }
+            }
+        }
+    });
+
+    // Actualizar el resumen de elementos
+    actualizarResumenElementos();
+});
+
+function actualizarResumenElementos() {
+    const resumenDiv = document.getElementById('elementosResumen');
+    let total = elementosData.casco + elementosData.chaleco + elementosData.botas;
+    
+    if (total === 0) {
+        resumenDiv.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <p>No hay elementos faltantes en el período</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    
+    // Calcular porcentajes y crear items
+    for (const [key, value] of Object.entries(elementosData)) {
+        const porcentaje = total > 0 ? Math.round((value / total) * 100) : 0;
+        const nombre = key.charAt(0).toUpperCase() + key.slice(1);
+        
+        html += `
+            <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                <div class="d-flex align-items-center">
+                    <span class="me-2 fs-5">${iconos[key]}</span>
+                    <div>
+                        <div class="fw-bold">${nombre}</div>
+                        <small class="text-muted">${value} veces</small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold text-primary">${porcentaje}%</div>
+                    <div class="progress" style="width: 60px; height: 6px;">
+                        <div class="progress-bar" style="width: ${porcentaje}%; background-color: ${colores[key]}"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Agregar total
+    html += `
+        <div class="mt-3 p-2 bg-primary text-white rounded text-center">
+            <strong>Total de incidencias: ${total}</strong>
+        </div>
+    `;
+    
+    resumenDiv.innerHTML = html;
+}
+
+function exportToExcel() {
+    // Crear una tabla temporal para la exportación
+    const table = document.getElementById('topItemsTable');
+    let csv = [];
+    
+    // Encabezados
+    let headers = [];
+    for (let i = 0; i < table.rows[0].cells.length; i++) {
+        headers.push(table.rows[0].cells[i].innerText);
+    }
+    csv.push(headers.join(','));
+    
+    // Datos
+    for (let i = 1; i < table.rows.length; i++) {
+        let row = [];
+        for (let j = 0; j < table.rows[i].cells.length; j++) {
+            row.push(table.rows[i].cells[j].innerText.replace(/,/g, ''));
+        }
+        csv.push(row.join(','));
+    }
+    
+    // Agregar datos de la gráfica
+    csv.push('');
+    csv.push('Estadísticas de Elementos Faltantes');
+    csv.push('Elemento,Veces que ha Faltado,Porcentaje');
+    csv.push(`Casco,${elementosData.casco},${Math.round((elementosData.casco/(elementosData.casco+elementosData.chaleco+elementosData.botas))*100)}%`);
+    csv.push(`Chaleco,${elementosData.chaleco},${Math.round((elementosData.chaleco/(elementosData.casco+elementosData.chaleco+elementosData.botas))*100)}%`);
+    csv.push(`Botas,${elementosData.botas},${Math.round((elementosData.botas/(elementosData.casco+elementosData.chaleco+elementosData.botas))*100)}%`);
+    
+    // Descargar archivo
+    const csvContent = "data:text/csv;charset=utf-8," + csv.join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `reporte_alertas_{{ start_date_input }}_al_{{ end_date_input }}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Mostrar mensaje de éxito
+    showToast('¡Reporte exportado exitosamente!', 'success');
+}
+
+function showToast(message, type = 'info') {
+    // Función simple para mostrar notificaciones
+    alert(message);
+}
+
+// Inicializar tooltips si usas Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+@media print {
+    .btn {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Estilos para la gráfica */
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+</style>
+{% endblock %}

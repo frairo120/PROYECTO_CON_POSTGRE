@@ -495,9 +495,7 @@
                             <button class="refresh-button" id="refresh-alerts-btn" title="Actualizar alertas">
                                 <i class="fas fa-sync-alt"></i> Actualizar
                             </button>
-                            <button class="refresh-button" id="clear-alerts-btn" title="Limpiar alertas">
-                                <i class="fas fa-trash"></i> Limpiar
-                            </button>
+                           
                         </div>
                     </div>
                     <div class="card-body-custom p-0">
@@ -741,10 +739,131 @@
         // B. FUNCIÓN PARA LIMPIAR ALERTAS
         // ------------------------------------------------------------------
        
-        // ------------------------------------------------------------------
-        // C. FUNCIÓN PARA ACTUALIZAR MANUALMENTE
-        // ------------------------------------------------------------------
-       
+// ------------------------------------------------------------------
+// C. FUNCIÓN PARA ACTUALIZAR MANUALMENTE
+// ------------------------------------------------------------------
+ 
+function refreshAlerts() {
+    // Mostrar indicador de carga en el botón
+    const refreshBtn = document.getElementById('refresh-alerts-btn');
+    const originalHtml = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+    refreshBtn.disabled = true;
+    
+    console.log('Actualización manual de alertas solicitada');
+    
+    // Forzar la actualización
+    fetchAlerts();
+    
+    // Restaurar el botón después de 1 segundo
+    setTimeout(() => {
+        refreshBtn.innerHTML = originalHtml;
+        refreshBtn.disabled = false;
+        
+        // Mostrar confirmación visual
+        const originalBg = refreshBtn.style.backgroundColor;
+        refreshBtn.style.backgroundColor = '#d4edda';
+        setTimeout(() => {
+            refreshBtn.style.backgroundColor = originalBg;
+        }, 1000);
+        
+    }, 1000);
+}
+
+
+
+
+
+
+
+
+// ------------------------------------------------------------------
+// B. FUNCIÓN PARA LIMPIAR ALERTAS (COMPLETADA)
+// ------------------------------------------------------------------
+function clearAlerts() {
+    if (!confirm('¿Estás seguro de que deseas limpiar todas las alertas?')) {
+        return;
+    }
+    
+    const clearBtn = document.getElementById('clear-alerts-btn');
+    const originalHtml = clearBtn.innerHTML;
+    clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpiando...';
+    clearBtn.disabled = true;
+    
+    fetch("", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la tabla
+            fetchAlerts();
+            
+            // Mostrar mensaje de éxito
+            showNotification('Alertas limpiadas correctamente', 'success');
+        } else {
+            throw new Error(data.error || 'Error al limpiar alertas');
+        }
+    })
+    .catch(err => {
+        console.error('Error al limpiar alertas:', err);
+        showNotification('Error al limpiar alertas', 'error');
+    })
+    .finally(() => {
+        // Restaurar el botón
+        setTimeout(() => {
+            clearBtn.innerHTML = originalHtml;
+            clearBtn.disabled = false;
+        }, 1000);
+    });
+}
+
+// Función auxiliar para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // ------------------------------------------------------------------
         // D. INICIALIZACIÓN Y EVENTOS
         // ------------------------------------------------------------------

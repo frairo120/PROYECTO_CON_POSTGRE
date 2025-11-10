@@ -5,16 +5,12 @@ from django.db.models import Q
 from .camera import VideoCamera
 from .droidcam import DroidCamera
 import json
-# Global camera instance
-camera = None  # Se inicializará cuando se seleccione el tipo de cámara
 from django.urls import reverse_lazy,reverse
 from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-
-# Importar Modelos y Forms
 from .models import Menu, Module, Cargo, Empleado, GroupModulePermission,User, Alert
 from .forms import MenuForm, ModuleForm, CargoForm, EmpleadoForm, LoginForm, GroupForm, GroupModulePermissionForm
 from .forms import UserForm,UserEditForm,UserPasswordChangeForm
@@ -26,6 +22,7 @@ from django.utils.timezone import localtime
 from django.db import models
 from .models import Capacitacion, ProgresoCapacitacion, Certificado
 
+camera = None 
 class MenuContextMixin:
     """Mixin para agregar el contexto de menús y módulos a las vistas."""
     def get_menu_context(self, user):
@@ -1005,3 +1002,102 @@ def alert_resolution_modal(request, alert_id):
     }
     
     return render(request, 'usuarios/resolution_modal.html', context)
+
+
+
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta, date
+from django.db.models import Count, Q
+
+# Importar el modelo (asume que está en .models o ajusta la importación)
+
+
+# --- Funciones de Reporte (incluidas aquí para ser autocontenidas) ---
+
+def get_alerts_summary_report(start_date: date, end_date: date) -> dict:
+    """
+    Genera un resumen del conteo de alertas, agrupado por nivel y estado de resolución.
+    """
+    end_datetime = timezone.datetime.combine(end_date, timezone.localtime().max.time())
+    start_datetime = timezone.datetime.combine(start_date, timezone.localtime().min.time())
+
+    alerts = Alert.objects.filter(
+        timestamp__range=(start_datetime, end_datetime)
+    )
+
+    report_data = alerts.aggregate(
+        total_alerts=Count('id'),
+        high_alerts=Count('id', filter=Q(level='high')),
+        medium_alerts=Count('id', filter=Q(level='medium')),
+        low_alerts=Count('id', filter=Q(level='low')),
+        resolved_alerts=Count('id', filter=Q(resolved=True)),
+        non_compliant_alerts=Count('id', filter=Q(resolution_status='non_compliant')),
+    )
+
+    report_data['start_date'] = start_date
+    report_data['end_date'] = end_date
+    
+    return report_data
+
+def get_top_non_compliant_items(limit=10) -> list:
+    """
+    Identifica y cuenta los elementos (`missing`) más frecuentemente
+    asociados con un 'Incumplimiento Real' ('non_compliant').
+    """
+    top_items = Alert.objects.filter(
+        resolution_status='non_compliant'
+    ).exclude(
+        missing__isnull=True
+    ).exclude(
+        missing__exact=''
+    ).values(
+        'missing'
+    ).annotate(
+        count=Count('missing')
+    ).order_by(
+        '-count'
+    )[:limit]
+
+    return list(top_items)
+
+
+# --- Vista de Django ---
+
+def alerts_report_view(request):
+    """
+    Muestra los reportes de resumen de alertas y objetos incumplidos.
+    Permite filtrar por rango de fechas (últimos 7 días por defecto).
+    """
+    today = timezone.localdate()
+    
+    # 1. Manejo del formulario de fechas (si se envía)
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            # En caso de formato de fecha incorrecto, usar el valor por defecto
+            start_date = today - timedelta(days=6)
+            end_date = today
+    else:
+        # 2. Fechas por defecto: Últimos 7 días
+        start_date = today - timedelta(days=6)
+        end_date = today
+
+    # 3. Generar los reportes
+    summary_report = get_alerts_summary_report(start_date, end_date)
+    top_items_report = get_top_non_compliant_items(limit=10)
+
+    # 4. Contexto para la plantilla
+    context = {
+        'summary': summary_report,
+        'top_items': top_items_report,
+        'start_date_input': start_date.isoformat(),
+        'end_date_input': end_date.isoformat(),
+    }
+
+    return render(request, 'reportes/reports.html', context)
