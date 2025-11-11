@@ -12,7 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-
+from decouple import config
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6m##io#0v@ivqyl=x)i9knuk6qjgg6+i$fch+f5sc&mlhmlq44'
+SECRET_KEY = config('SECRET_KEY', default='clave-temporal-solo-desarrollo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,14 +80,9 @@ WSGI_APPLICATION = 'sistema.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'deteccion_db',        # Nombre de la base de datos en Render
-        'USER': 'admin',               # Usuario de la base de datos
-        'PASSWORD': 'Rx9i78svOFMs7PSc8rNhqtJg3qkczr0p',       # Contraseña de la base de datos
-        'HOST': 'dpg-d49dlm2li9vc739pq430-a.oregon-postgres.render.com',       # Host de tu base de datos en Render
-        'PORT': '5432',                      # Puerto de PostgreSQL
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3')
+    )
 }
 
 
@@ -126,6 +123,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -134,11 +133,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# settings.py
 
-STATICFILES_DIRS = [
-    # Ruta donde se almacenan los archivos estáticos a nivel de proyecto
-    # Esto es donde DEBES guardar tu carpeta 'static'
-    os.path.join(BASE_DIR, 'static'), 
-]
-MODEL_PATH = r"C:\Users\jonat\Desktop\modelo_entrenado\sistema\models2\Models\best.pt"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MODEL_PATH = config('MODEL_PATH', default=os.path.join(BASE_DIR, 'models', 'best.pt'))
