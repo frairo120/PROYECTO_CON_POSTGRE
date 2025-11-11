@@ -21,9 +21,13 @@ from .models import Capacitacion, ProgresoCapacitacion, Certificado
 from django.contrib.auth.models import Group, Permission
 import cv2
 import threading
-import gzip
 from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.gzip import gzip_page
+from django.db.models import Q
+
+from django.shortcuts import render, redirect, get_object_or_404
+
 
 # =============================================
 # NUEVO SISTEMA DE VIDEO PARA RENDER
@@ -217,9 +221,9 @@ def generate_frames():
 # VISTAS DE VIDEO ACTUALIZADAS
 # =============================================
 
-@gzip.gzip_page
+@gzip_page  # ✅ AHORA FUNCIONARÁ CORRECTAMENTE
 def video_feed(request):
-    """Endpoint para el stream de video - NUEVA VERSIÓN"""
+    """Endpoint para el stream de video - CORREGIDO"""
     try:
         mode = request.GET.get('mode', 'view')
         print(f"🎥 Solicitando video feed - Modo: {mode}")
@@ -238,7 +242,6 @@ def video_feed(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
-
 @csrf_exempt
 def toggle_camera(request):
     """Función mantenida para compatibilidad - NUEVA VERSIÓN"""
@@ -731,18 +734,7 @@ class ModuleDeleteView(LoginRequiredMixin, DeleteView):
 from django.views.generic import ListView
 from django.contrib.auth.models import Group
 
-class GroupModulePermissionsView(ListView):
-    model = Group
-    template_name = 'grouppermisos/list.html'
-    context_object_name = 'groups'
 
-    def get_queryset(self):
-        # Optimización: Prefetch para reducir consultas a la DB
-        return Group.objects.prefetch_related(
-            'module_permissions__module',
-            'module_permissions__permissions__content_type'
-        ).all()
-    
 
 
 # ✅ LISTAR PERMISOS DE GRUPO POR MÓDULO
