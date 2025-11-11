@@ -4,7 +4,7 @@ import os
 import time
 from ultralytics import YOLO
 import logging
-
+from django.conf import settings
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class DroidCamera:
         self.alert_delay = 3.0  # 3 segundos de retraso
         
         # Ruta absoluta al modelo YOLO
-        model_path = r'C:\Users\jonat\Desktop\modelo_entrenado\sistema\models2\Models\best.pt'
+        model_path = settings.MODEL_PATH
 
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Error loading model: {model_path} not found")
