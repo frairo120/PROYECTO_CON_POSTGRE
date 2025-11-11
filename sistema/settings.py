@@ -80,14 +80,9 @@ WSGI_APPLICATION = 'sistema.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'deteccion_db',        # Nombre de la base de datos en Render
-        'USER': 'admin',               # Usuario de la base de datos
-        'PASSWORD': 'Rx9i78svOFMs7PSc8rNhqtJg3qkczr0p',       # Contraseña de la base de datos
-        'HOST': 'dpg-d49dlm2li9vc739pq430-a.oregon-postgres.render.com',       # Host de tu base de datos en Render
-        'PORT': '5432',                      # Puerto de PostgreSQL
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3')
+    )
 }
 
 

@@ -16,9 +16,9 @@ class DroidCamera:
         self.ip_address = ip_address
         self.port = port
         self.last_alert_time = None
-        self.alert_cooldown = 5  # segundos entre alertas
+        self.alert_cooldown = 5
         self.last_capture_time = 0
-        self.capture_interval = 2  # segundos mínimo entre capturas
+        self.capture_interval = 2
         self.consecutive_errors = 0
         self.max_consecutive_errors = 5
         
@@ -26,17 +26,19 @@ class DroidCamera:
         self.human_detection_time = None
         self.alert_pending = False
         self.pending_alert_data = None
-        self.alert_delay = 3.0  # 3 segundos de retraso
+        self.alert_delay = 3.0
         
-        # Ruta absoluta al modelo YOLO
-        model_path = settings.MODEL_PATH
+        # ✅ CORREGIDO: Usar self.model_path consistentemente
+        self.model_path = settings.MODEL_PATH
 
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Error loading model: {model_path} not found")
+        # ✅ CORREGIDO: Verificar self.model_path, no model_path
+        if not os.path.exists(self.model_path):
+            raise FileNotFoundError(f"Error loading model: {self.model_path} not found")
 
         try:
-            logger.info(f"Attempting to load YOLOv8 model from: {model_path}")
-            self.model = YOLO(model_path)
+            # ✅ CORREGIDO: Usar self.model_path
+            logger.info(f"Attempting to load YOLOv8 model from: {self.model_path}")
+            self.model = YOLO(self.model_path)
             logger.info("✅ YOLOv8 model loaded successfully")
 
             # Configuración optimizada
