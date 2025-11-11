@@ -5,6 +5,7 @@ import time
 from ultralytics import YOLO
 import logging
 from django.conf import settings
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,6 +28,9 @@ class DroidCamera:
         self.alert_pending = False
         self.pending_alert_data = None
         self.alert_delay = 3.0
+        
+        # ✅ DETECTAR SI ESTAMOS EN RENDER
+        self.is_render = 'RENDER' in os.environ or '.onrender.com' in getattr(settings, 'ALLOWED_HOSTS', [])
         
         # ✅ CORREGIDO: Usar self.model_path consistentemente
         self.model_path = settings.MODEL_PATH
@@ -211,46 +215,73 @@ class DroidCamera:
             return None
 
     def start(self):
-        """Inicia la conexión con DroidCam con manejo robusto de errores"""
+        """Inicia la cámara - compatible con Render y local"""
         if self.is_running:
             return True
 
         try:
             self._safe_release_camera()
 
-            droidcam_url = f"http://{self.ip_address}:{self.port}/video"
-            logger.info(f"Attempting to connect to DroidCam at: {droidcam_url}")
+            # ✅ NUEVA LÓGICA: DIFERENCIAR ENTRE RENDER Y LOCAL
+            if self.is_render:
+                logger.info("🌐 Ejecutando en Render - usando video de prueba")
+                
+                # Buscar videos en la carpeta media/
+                possible_videos = [
+                    os.path.join(settings.BASE_DIR, 'media', 'test_video.mp4'),
+                    os.path.join(settings.BASE_DIR, 'media', 'videos', 'test_video.mp4'),
+                    os.path.join(settings.BASE_DIR, 'media', 'demo.mp4'),
+                ]
+                
+                video_path = None
+                for v_path in possible_videos:
+                    if os.path.exists(v_path):
+                        video_path = v_path
+                        break
+                
+                if video_path:
+                    self.video = cv2.VideoCapture(video_path)
+                    logger.info(f"✅ Video cargado: {video_path}")
+                else:
+                    # Si no hay video, crear uno negro
+                    self.video = cv2.VideoCapture(0)
+                    logger.warning("⚠️ No se encontró video de prueba, usando video negro")
+                
+            else:
+                # ✅ CÓDIGO ORIGINAL PARA DROIDCAM LOCAL
+                droidcam_url = f"http://{self.ip_address}:{self.port}/video"
+                logger.info(f"📱 Conectando a DroidCam: {droidcam_url}")
 
-            # Configurar VideoCapture con parámetros optimizados
-            self.video = cv2.VideoCapture(droidcam_url)
-            
-            # Configuraciones para mejorar la estabilidad
-            self.video.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            self.video.set(cv2.CAP_PROP_FPS, 15)
-            self.video.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+                self.video = cv2.VideoCapture(droidcam_url)
+                
+                # Configuraciones para mejorar la estabilidad
+                self.video.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                self.video.set(cv2.CAP_PROP_FPS, 15)
+                self.video.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
-            # Esperar a que la cámara se inicialice
-            time.sleep(2)
+                # Esperar a que la cámara se inicialice
+                time.sleep(2)
 
+            # Verificar conexión
             if not self.video.isOpened():
-                logger.error("❌ No se pudo conectar a DroidCam. Verifica IP y puerto.")
+                logger.error("❌ No se pudo abrir el video")
                 self._safe_release_camera()
                 return False
 
             # Leer frame de prueba
             ret, frame = self.video.read()
             if not ret or frame is None:
-                logger.error("❌ No se pudo leer el primer frame.")
+                logger.error("❌ No se pudo leer el primer frame")
                 self._safe_release_camera()
                 return False
 
-            logger.info("✅ DroidCam initialized successfully")
+            logger.info("✅ Cámara/video inicializado exitosamente")
             self.is_running = True
             self.consecutive_errors = 0
             return True
 
         except Exception as e:
-            logger.error(f"❌ Error starting DroidCam: {str(e)}")
+            logger.error(f"❌ Error iniciando cámara: {str(e)}")
             self.is_running = False
             self._safe_release_camera()
             return False
@@ -259,7 +290,7 @@ class DroidCamera:
         """Detiene la cámara de forma segura"""
         self.is_running = False
         self._safe_release_camera()
-        logger.info("🛑 DroidCam stopped successfully")
+        logger.info("🛑 Cámara detenida")
 
     def _validate_frame(self, frame):
         """Valida que el frame sea usable"""
@@ -281,6 +312,12 @@ class DroidCamera:
         try:
             # Leer frame
             success, image = self.video.read()
+            
+            # ✅ EN RENDER: Si llega al final del video, reiniciar
+            if self.is_render and not success:
+                logger.info("🔄 Fin del video, reiniciando...")
+                self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Volver al inicio
+                success, image = self.video.read()
             
             if not success or not self._validate_frame(image):
                 self.consecutive_errors += 1
@@ -363,6 +400,12 @@ class DroidCamera:
                         )
                         y_offset += 35
 
+                    # ✅ EN RENDER: Mostrar indicador de video de prueba
+                    if self.is_render:
+                        cv2.putText(annotated_frame, "🎥 VIDEO DE PRUEBA - RENDER", 
+                                   (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                        y_offset += 30
+
                     cv2.putText(annotated_frame, f"Detecciones: {num_detections}", (10, y_offset),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                     y_offset += 30
@@ -391,10 +434,19 @@ class DroidCamera:
                     self.alert_pending = False
                     self.pending_alert_data = None
                     
-                    cv2.putText(original_image, "Detecciones: 0", (10, 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-                    cv2.putText(original_image, "No se detectaron objetos relevantes", (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                    # ✅ EN RENDER: Indicar que es video de prueba
+                    if self.is_render:
+                        cv2.putText(original_image, "🎥 VIDEO DE PRUEBA - RENDER", (10, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                        cv2.putText(original_image, "Detecciones: 0", (10, 60),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                        cv2.putText(original_image, "No se detectaron objetos relevantes", (10, 90),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                    else:
+                        cv2.putText(original_image, "Detecciones: 0", (10, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                        cv2.putText(original_image, "No se detectaron objetos relevantes", (10, 60),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
                     ret, jpeg = cv2.imencode('.jpg', original_image, [cv2.IMWRITE_JPEG_QUALITY, 80])
                     return jpeg.tobytes()
