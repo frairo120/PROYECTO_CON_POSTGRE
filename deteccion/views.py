@@ -23,7 +23,7 @@ import cv2
 import threading
 from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.gzip import gzip_page
+
 from django.db.models import Q
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -221,7 +221,7 @@ def generate_frames():
 # VISTAS DE VIDEO ACTUALIZADAS
 # =============================================
 
-@gzip_page  # ✅ AHORA FUNCIONARÁ CORRECTAMENTE
+
 def video_feed(request):
     """Endpoint para el stream de video - CORREGIDO"""
     try:
@@ -261,6 +261,7 @@ def toggle_camera(request):
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
 
 class MenuContextMixin:
     """Mixin para agregar el contexto de menús y módulos a las vistas."""
