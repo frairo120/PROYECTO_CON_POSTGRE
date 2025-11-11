@@ -244,28 +244,31 @@
         
         /* Camera Card Styles */
         .video-placeholder {
-            background-color: #f8f9fa;
+            background-color: #000;
             border-radius: 8px;
             overflow: hidden;
             margin-bottom: 20px;
             position: relative;
-            min-height: 300px;
+            min-height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
         }
         
         .video-feed {
             width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 70vh;
             object-fit: contain;
+            background: #000;
         }
         
         .camera-controls {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
         
         .control-button {
@@ -287,10 +290,15 @@
             border-color: #adb5bd;
         }
         
-        .toggle-camera[data-status="on"] {
-            background-color: var(--success-color);
+        .control-button.active {
+            background-color: var(--info-color);
             color: white;
-            border-color: var(--success-color);
+            border-color: var(--info-color);
+        }
+        
+        .control-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         /* Notifications Card Styles */
@@ -388,6 +396,11 @@
         .fade-in {
             animation: fadeIn 0.5s ease;
         }
+        
+        .video-info {
+            text-align: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -455,34 +468,39 @@
                 <!-- Camera Card -->
                 <div class="card camera-card">
                     <div class="card-header-custom">
-                        <h2><i class="fas fa-video"></i> Cámara en vivo</h2>
+                        <h2><i class="fas fa-video"></i> Video de Prueba - Detección EPP</h2>
                     </div>
                     <div class="card-body-custom">
                         <div class="video-placeholder">
-                            <img id="video-feed" style="display: none;" alt="Cámara en vivo" class="video-feed">
+                            <img id="video-feed" style="display: none;" alt="Video de prueba" class="video-feed">
                             <div id="camera-status" class="text-muted">
-                                <i class="fas fa-video-slash fa-2x mb-2"></i>
-                                <p>Cámara apagada</p>
+                                <i class="fas fa-video fa-2x mb-2"></i>
+                                <p>Preparando video de prueba...</p>
                             </div>
                         </div>
                         
                         <div class="camera-controls">
                             <div class="d-flex gap-2 flex-grow-1">
-                                <select id="camera-type" class="form-select">
-                                    <option value="droidcam">DroidCam</option>
+                                <select id="video-mode" class="form-select">
+                                    <option value="view">Solo Ver Video</option>
+                                    <option value="detection">Ver con Detección</option>
                                 </select>
-                                <div id="droidcam-settings" style="display: none; display: flex; gap: 5px;">
-                                <input type="text" id="droidcam-ip" placeholder="IP" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 100px;">
-                                <input type="text" id="droidcam-port" placeholder="Puerto" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; width: 70px;">
                             </div>
-                            </div>
+                            
                             <button class="control-button fullscreen-btn">
                                 <i class="fas fa-expand"></i> <span>Pantalla completa</span>
                             </button>
-                            <button class="control-button toggle-camera" data-status="off">
-                                <i class="fas fa-power-off"></i> <span>Encender</span>
+                            
+                            <button class="control-button" id="play-pause-btn">
+                                <i class="fas fa-play"></i> <span>Reproducir</span>
                             </button>
-                           
+                        </div>
+                        
+                        <div class="video-info">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Usando video de prueba: test_video.mp4
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -495,7 +513,6 @@
                             <button class="refresh-button" id="refresh-alerts-btn" title="Actualizar alertas">
                                 <i class="fas fa-sync-alt"></i> Actualizar
                             </button>
-                           
                         </div>
                     </div>
                     <div class="card-body-custom p-0">
@@ -556,6 +573,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // =============================================
+        // SISTEMA DE NAVEGACIÓN Y MENÚ
+        // =============================================
+        
         // Mobile menu toggle
         document.querySelector('.mobile-menu-toggle')?.addEventListener('click', function() {
             document.querySelector('.sidebar').classList.toggle('active');
@@ -576,60 +597,137 @@
             });
         });
 
-        // DroidCam settings
-        document.getElementById('camera-type').addEventListener('change', function() {
-            const droidcamSettings = document.getElementById('droidcam-settings');
-            if (this.value === 'droidcam') {
-                droidcamSettings.classList.remove('d-none');
-                droidcamSettings.classList.add('d-flex');
-            } else {
-                droidcamSettings.classList.add('d-none');
-                droidcamSettings.classList.remove('d-flex');
+        // Notificaciones
+        document.querySelector('.notification-button').addEventListener('click', () => {
+            alert('Funcionalidad de notificaciones en desarrollo');
+        });
+
+        // =============================================
+        // SISTEMA DE VIDEO PARA RENDER
+        // =============================================
+
+        let videoPlaying = false;
+        let currentMode = 'view';
+
+        // Configuración de video
+        document.getElementById('video-mode').addEventListener('change', function() {
+            currentMode = this.value;
+            console.log(`🎬 Cambiando a modo: ${currentMode}`);
+            
+            if (videoPlaying) {
+                restartVideoWithNewMode();
             }
         });
 
-        // Toggle cámara
-        function toggleCamera(action) {
-            const cameraType = document.getElementById('camera-type').value;
-            const data = { action, camera_type: cameraType };
-            if (cameraType === 'droidcam') {
-                data.ip = document.getElementById('droidcam-ip').value || '192.168.1.100';
-                data.port = document.getElementById('droidcam-port').value || '4747';
-            }
-            return fetch('{% url "deteccion:toggle_camera" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify(data)
-            }).then(r => r.json());
-        }
-
-        document.querySelector('.toggle-camera').addEventListener('click', function() {
-            const btn = this;
-            const status = btn.getAttribute('data-status');
-            const action = status === 'off' ? 'start' : 'stop';
+        // Función para cargar el video
+        function loadVideo() {
             const video = document.getElementById('video-feed');
             const statusDiv = document.getElementById('camera-status');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            
+            console.log('🔄 Cargando video de prueba...');
+            
+            // URL del video feed con parámetros
+            let videoUrl = '{% url "deteccion:video_feed" %}';
+            videoUrl += `?mode=${currentMode}&t=${new Date().getTime()}`;
+            
+            video.src = videoUrl;
+            video.style.display = 'block';
+            statusDiv.style.display = 'none';
+            videoPlaying = true;
+            
+            // Configurar eventos del video
+            video.onloadstart = () => {
+                console.log('📹 Video: carga iniciada');
+                playPauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Cargando...</span>';
+                playPauseBtn.disabled = true;
+            };
+            
+            video.onloadeddata = () => {
+                console.log('✅ Video: datos cargados');
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
+                playPauseBtn.disabled = false;
+                
+                // Reproducir automáticamente
+                video.play().catch(err => {
+                    console.warn('⚠️ No se puede reproducir automáticamente:', err);
+                });
+            };
+            
+            video.onplay = () => {
+                console.log('🎬 Video reproduciéndose');
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
+            };
+            
+            video.onpause = () => {
+                console.log('⏸️ Video pausado');
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
+            };
+            
+            video.onended = () => {
+                console.log('🏁 Video terminado');
+                playPauseBtn.innerHTML = '<i class="fas fa-redo"></i> <span>Reiniciar</span>';
+                videoPlaying = false;
+                
+                // Auto-reiniciar después de 2 segundos
+                setTimeout(() => {
+                    if (!videoPlaying) {
+                        loadVideo();
+                    }
+                }, 2000);
+            };
+            
+            video.onerror = (e) => {
+                console.error('❌ Error en video:', e);
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
+                playPauseBtn.disabled = false;
+                videoPlaying = false;
+                
+                // Mostrar error
+                statusDiv.style.display = 'flex';
+                statusDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+                        <p>Error cargando video</p>
+                        <small class="text-muted">Verifica la consola para detalles</small>
+                    </div>
+                `;
+                video.style.display = 'none';
+            };
+            
+            // Forzar carga
+            video.load();
+        }
 
-            toggleCamera(action).then(data => {
-                if (data.status === 'started') {
-                    btn.setAttribute('data-status', 'on');
-                    btn.querySelector('span').textContent = 'Apagar';
-                    btn.classList.add('toggle-camera-on');
-                    video.src = '{% url "deteccion:video_feed" %}';
-                    video.style.display = 'block';
-                    statusDiv.style.display = 'none';
-                } else {
-                    btn.setAttribute('data-status', 'off');
-                    btn.querySelector('span').textContent = 'Encender';
-                    btn.classList.remove('toggle-camera-on');
-                    video.style.display = 'none';
-                    statusDiv.style.display = 'flex';
-                    statusDiv.innerHTML = '<i class="fas fa-video-slash fa-2x mb-2"></i><p>Cámara apagada</p>';
-                }
-            });
+        // Función para reiniciar video con nuevo modo
+        function restartVideoWithNewMode() {
+            const video = document.getElementById('video-feed');
+            video.pause();
+            setTimeout(() => {
+                loadVideo();
+            }, 500);
+        }
+
+        // Control de reproducción/pausa
+        document.getElementById('play-pause-btn').addEventListener('click', function() {
+            const video = document.getElementById('video-feed');
+            const btn = this;
+            
+            if (!videoPlaying) {
+                // Iniciar reproducción
+                loadVideo();
+            } else if (video.paused) {
+                // Reanudar
+                video.play().then(() => {
+                    btn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
+                }).catch(err => {
+                    console.error('Error al reanudar:', err);
+                });
+            } else {
+                // Pausar
+                video.pause();
+                btn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
+            }
         });
 
         // Fullscreen
@@ -644,20 +742,24 @@
             }
         });
 
-        // Notificaciones
-        document.querySelector('.notification-button').addEventListener('click', () => {
-            // Aquí podrías implementar un modal de notificaciones
-            alert('Funcionalidad de notificaciones en desarrollo');
+        // Cargar video automáticamente al iniciar (solo vista)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Inicializando reproductor de video...');
+            
+            // Iniciar en modo vista después de un breve delay
+            setTimeout(() => {
+                loadVideo();
+            }, 1000);
         });
-    </script>
-    
-    <script>
-        let alertInterval;
-        const REFRESH_RATE = 30000; // 30 segundos para mejor tiempo real
 
-        // ------------------------------------------------------------------
-        // A. FUNCIÓN PARA CARGAR ALERTAS (CORREGIDA)
-        // ------------------------------------------------------------------
+        // =============================================
+        // SISTEMA DE ALERTAS
+        // =============================================
+
+        let alertInterval;
+        const REFRESH_RATE = 30000; // 30 segundos
+
+        // Función para cargar alertas
         function fetchAlerts() {
             fetch("{% url 'deteccion:latest_alerts' %}")
                 .then(response => {
@@ -735,143 +837,66 @@
                 });
         }
 
-        // ------------------------------------------------------------------
-        // B. FUNCIÓN PARA LIMPIAR ALERTAS
-        // ------------------------------------------------------------------
-       
-// ------------------------------------------------------------------
-// C. FUNCIÓN PARA ACTUALIZAR MANUALMENTE
-// ------------------------------------------------------------------
- 
-function refreshAlerts() {
-    // Mostrar indicador de carga en el botón
-    const refreshBtn = document.getElementById('refresh-alerts-btn');
-    const originalHtml = refreshBtn.innerHTML;
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-    refreshBtn.disabled = true;
-    
-    console.log('Actualización manual de alertas solicitada');
-    
-    // Forzar la actualización
-    fetchAlerts();
-    
-    // Restaurar el botón después de 1 segundo
-    setTimeout(() => {
-        refreshBtn.innerHTML = originalHtml;
-        refreshBtn.disabled = false;
-        
-        // Mostrar confirmación visual
-        const originalBg = refreshBtn.style.backgroundColor;
-        refreshBtn.style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            refreshBtn.style.backgroundColor = originalBg;
-        }, 1000);
-        
-    }, 1000);
-}
-
-
-
-
-
-
-
-
-// ------------------------------------------------------------------
-// B. FUNCIÓN PARA LIMPIAR ALERTAS (COMPLETADA)
-// ------------------------------------------------------------------
-function clearAlerts() {
-    if (!confirm('¿Estás seguro de que deseas limpiar todas las alertas?')) {
-        return;
-    }
-    
-    const clearBtn = document.getElementById('clear-alerts-btn');
-    const originalHtml = clearBtn.innerHTML;
-    clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpiando...';
-    clearBtn.disabled = true;
-    
-    fetch("", {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Actualizar la tabla
+        // Función para actualizar manualmente
+        function refreshAlerts() {
+            // Mostrar indicador de carga en el botón
+            const refreshBtn = document.getElementById('refresh-alerts-btn');
+            const originalHtml = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+            refreshBtn.disabled = true;
+            
+            console.log('Actualización manual de alertas solicitada');
+            
+            // Forzar la actualización
             fetchAlerts();
             
-            // Mostrar mensaje de éxito
-            showNotification('Alertas limpiadas correctamente', 'success');
-        } else {
-            throw new Error(data.error || 'Error al limpiar alertas');
+            // Restaurar el botón después de 1 segundo
+            setTimeout(() => {
+                refreshBtn.innerHTML = originalHtml;
+                refreshBtn.disabled = false;
+                
+                // Mostrar confirmación visual
+                const originalBg = refreshBtn.style.backgroundColor;
+                refreshBtn.style.backgroundColor = '#d4edda';
+                setTimeout(() => {
+                    refreshBtn.style.backgroundColor = originalBg;
+                }, 1000);
+                
+            }, 1000);
         }
-    })
-    .catch(err => {
-        console.error('Error al limpiar alertas:', err);
-        showNotification('Error al limpiar alertas', 'error');
-    })
-    .finally(() => {
-        // Restaurar el botón
-        setTimeout(() => {
-            clearBtn.innerHTML = originalHtml;
-            clearBtn.disabled = false;
-        }, 1000);
-    });
-}
 
-// Función auxiliar para mostrar notificaciones
-function showNotification(message, type = 'info') {
-    // Crear elemento de notificación
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-eliminar después de 5 segundos
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
+        // Función auxiliar para mostrar notificaciones
+        function showNotification(message, type = 'info') {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
         }
-    }, 5000);
-}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // ------------------------------------------------------------------
-        // D. INICIALIZACIÓN Y EVENTOS
-        // ------------------------------------------------------------------
-
+        // Inicialización del sistema de alertas
         document.addEventListener('DOMContentLoaded', function() {
             // Asignar eventos a los botones
             document.getElementById('refresh-alerts-btn').addEventListener('click', refreshAlerts);
-            document.getElementById('clear-alerts-btn').addEventListener('click', clearAlerts);
             
             // Iniciar la recarga automática
             alertInterval = setInterval(fetchAlerts, REFRESH_RATE);
@@ -882,11 +907,7 @@ function showNotification(message, type = 'info') {
             console.log('Sistema de alertas inicializado - Actualizando cada', REFRESH_RATE / 1000, 'segundos');
         });
 
-        // ------------------------------------------------------------------
-        // E. MANEJO DE VISIBILIDAD DE LA PÁGINA (OPTIMIZACIÓN)
-        // ------------------------------------------------------------------
-
-        // Pausar actualizaciones cuando la pestaña no está visible
+        // Manejo de visibilidad de la página (optimización)
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 clearInterval(alertInterval);
@@ -897,6 +918,43 @@ function showNotification(message, type = 'info') {
                 console.log('Actualizaciones reanudadas - Pestaña activa');
             }
         });
+
+        // =============================================
+        // FUNCIÓN DE PRUEBA PARA DEBUGGING
+        // =============================================
+        
+        function testVideoEndpoint() {
+            console.log('🧪 Probando endpoint de video...');
+            
+            fetch('{% url "deteccion:video_feed" %}?mode=view')
+                .then(response => {
+                    console.log('📡 Respuesta del servidor:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        ok: response.ok,
+                        type: response.type
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    return response.blob();
+                })
+                .then(blob => {
+                    console.log('✅ Video feed responde correctamente. Tipo:', blob.type, 'Tamaño:', blob.size);
+                    
+                    if (blob.size === 0) {
+                        console.warn('⚠️ El video feed está vacío (tamaño 0)');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error al conectar con video feed:', error);
+                });
+        }
+
+        // Ejecutar prueba al cargar (opcional)
+        // testVideoEndpoint();
     </script>
 
 </body>
