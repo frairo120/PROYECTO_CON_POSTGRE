@@ -1,28 +1,264 @@
 # deteccion/views.py
-from django.shortcuts import render, redirect
-from django.http import StreamingHttpResponse, JsonResponse
-from django.db.models import Q
 from .camera import VideoCamera
 from .droidcam import DroidCamera
 import json
-from django.urls import reverse_lazy,reverse
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login
-from django.contrib.auth.decorators import login_required,user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from .models import Menu, Module, Cargo, Empleado, GroupModulePermission,User, Alert
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from .models import Menu, Module, Cargo, Empleado, GroupModulePermission, User, Alert
 from .forms import MenuForm, ModuleForm, CargoForm, EmpleadoForm, LoginForm, GroupForm, GroupModulePermissionForm
-from .forms import UserForm,UserEditForm,UserPasswordChangeForm
+from .forms import UserForm, UserEditForm, UserPasswordChangeForm
 from django.db.models import Prefetch
 import os
 from django.utils import timezone
 from datetime import timedelta
 from django.utils.timezone import localtime
-from django.db import models
+from django.db import models, transaction
 from .models import Capacitacion, ProgresoCapacitacion, Certificado
+from django.contrib.auth.models import Group, Permission
+import cv2
+import threading
+import gzip
+from django.http import StreamingHttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
-camera = None 
+# =============================================
+# NUEVO SISTEMA DE VIDEO PARA RENDER
+# =============================================
+
+class VideoProcessor:
+    def __init__(self):
+        self.mode = 'view'
+        self.video_path = os.path.join('media', 'test_video.mp4')
+        self.cap = None
+        self.model = None
+        self.is_render = 'RENDER' in os.environ
+        self.model_loaded = False
+        print(f"🎥 Inicializando procesador de video - RENDER: {self.is_render}")
+        
+    def initialize_video(self):
+        """Inicializa el video capture"""
+        try:
+            # Buscar el video en diferentes ubicaciones posibles
+            possible_paths = [
+                self.video_path,
+                os.path.join('media', 'test_video.mp4'),
+                os.path.join('media', 'videos', 'test_video.mp4'),
+            ]
+            
+            for path in possible_paths:
+                if os.path.exists(path):
+                    self.video_path = path
+                    print(f"✅ Video encontrado en: {path}")
+                    break
+            else:
+                print("❌ No se encontró ningún video de prueba")
+                return False
+            
+            self.cap = cv2.VideoCapture(self.video_path)
+            if not self.cap.isOpened():
+                print("❌ Error: No se puede abrir el video")
+                return False
+                
+            print(f"✅ Video cargado correctamente: {self.video_path}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error inicializando video: {e}")
+            return False
+    
+    def initialize_model(self):
+        """Inicializa el modelo YOLO para detección"""
+        try:
+            from ultralytics import YOLO
+            model_path = '/opt/render/project/src/models2/Models/best.pt'
+            
+            if not os.path.exists(model_path):
+                print(f"❌ Modelo no encontrado en: {model_path}")
+                return False
+                
+            print(f"🔧 Cargando modelo YOLO desde: {model_path}")
+            self.model = YOLO(model_path)
+            self.model_loaded = True
+            
+            print("✅ Modelo YOLOv8 cargado correctamente")
+            print(f"🔍 Clases detectables: {self.model.names}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error cargando modelo YOLO: {e}")
+            return False
+    
+    def process_frame_detection(self, frame):
+        """Procesa un frame con detección YOLO"""
+        if not self.model_loaded:
+            return frame
+            
+        try:
+            results = self.model.predict(frame, conf=0.25, verbose=False, imgsz=320)
+            
+            if results and len(results) > 0:
+                result = results[0]
+                annotated_frame = result.plot()
+                
+                # Agregar información al frame
+                cv2.putText(annotated_frame, "MODO DETECCIÓN ACTIVO", (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                cv2.putText(annotated_frame, f"Detecciones: {len(result.boxes)}", (10, 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                
+                return annotated_frame
+            else:
+                cv2.putText(frame, "MODO DETECCIÓN - SIN DETECCIONES", (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+                return frame
+                
+        except Exception as e:
+            print(f"❌ Error en procesamiento YOLO: {e}")
+            cv2.putText(frame, "ERROR EN DETECCIÓN", (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            return frame
+    
+    def process_frame_view(self, frame):
+        """Procesa un frame en modo solo vista"""
+        cv2.putText(frame, "MODO SOLO VISTA", (10, 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+        cv2.putText(frame, "Video de Prueba - test_video.mp4", (10, 60),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        return frame
+    
+    def get_frame(self):
+        """Obtiene el siguiente frame del video"""
+        if self.cap is None:
+            return None
+            
+        ret, frame = self.cap.read()
+        if not ret:
+            # Reiniciar video cuando termina
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, frame = self.cap.read()
+            if not ret:
+                return None
+        
+        # Procesar frame según el modo
+        if self.mode == 'detection' and self.model_loaded:
+            processed_frame = self.process_frame_detection(frame)
+        else:
+            processed_frame = self.process_frame_view(frame)
+        
+        return processed_frame
+    
+    def set_mode(self, mode):
+        """Cambia el modo de procesamiento"""
+        if mode != self.mode:
+            self.mode = mode
+            print(f"🔄 Modo cambiado a: {mode}")
+            
+            # Cargar modelo solo cuando se activa la detección
+            if mode == 'detection' and not self.model_loaded:
+                self.initialize_model()
+
+# Singleton para el procesador de video
+video_processor = None
+video_processor_lock = threading.Lock()
+
+def get_video_processor():
+    """Obtiene o crea el procesador de video (singleton)"""
+    global video_processor
+    with video_processor_lock:
+        if video_processor is None:
+            video_processor = VideoProcessor()
+            if not video_processor.initialize_video():
+                return None
+        return video_processor
+
+def generate_frames():
+    """Generador de frames para streaming con manejo de errores"""
+    processor = get_video_processor()
+    if processor is None:
+        print("❌ No se pudo inicializar el procesador de video")
+        return
+    
+    frame_count = 0
+    max_frames_without_detection = 100  # Prevenir loops infinitos
+    
+    while True:
+        try:
+            frame = processor.get_frame()
+            if frame is None:
+                frame_count += 1
+                if frame_count > max_frames_without_detection:
+                    print("🛑 Demasiados frames nulos, reiniciando...")
+                    break
+                continue
+            
+            frame_count = 0  # Reset counter on successful frame
+            
+            # Codificar frame como JPEG
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            if not ret:
+                continue
+                
+            frame_bytes = buffer.tobytes()
+            
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                   
+        except Exception as e:
+            print(f"❌ Error generando frame: {e}")
+            import traceback
+            traceback.print_exc()
+            break
+
+# =============================================
+# VISTAS DE VIDEO ACTUALIZADAS
+# =============================================
+
+@gzip.gzip_page
+def video_feed(request):
+    """Endpoint para el stream de video - NUEVA VERSIÓN"""
+    try:
+        mode = request.GET.get('mode', 'view')
+        print(f"🎥 Solicitando video feed - Modo: {mode}")
+        
+        # Configurar modo en el procesador
+        processor = get_video_processor()
+        if processor:
+            processor.set_mode(mode)
+        
+        return StreamingHttpResponse(
+            generate_frames(), 
+            content_type='multipart/x-mixed-replace; boundary=frame'
+        )
+    except Exception as e:
+        print(f"❌ Error en video_feed: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def toggle_camera(request):
+    """Función mantenida para compatibilidad - NUEVA VERSIÓN"""
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            action = data.get('action', 'view')
+            
+            print(f"🔄 Toggle camera recibido: {action}")
+            
+            # Para compatibilidad con el frontend existente
+            return JsonResponse({'status': 'started' if action == 'start' else 'stopped'})
+            
+        except Exception as e:
+            print(f"❌ Error en toggle_camera: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
 class MenuContextMixin:
     """Mixin para agregar el contexto de menús y módulos a las vistas."""
     def get_menu_context(self, user):
@@ -327,52 +563,7 @@ class ModuleListView(LoginRequiredMixin, ListView):
 
 # ----------------------------------------------------
 # Funciones para la cámara
-def gen_frames():
-    global camera
-    while True:
-        if camera:
-            frame = camera.get_frame()
-            if frame:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-def video_feed(request):
-    return StreamingHttpResponse(gen_frames(),
-                               content_type='multipart/x-mixed-replace; boundary=frame')
-
-def toggle_camera(request):
-    global camera
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        action = data.get('action')
-        camera_type = data.get('camera_type', 'pc')  # pc o droidcam
-        
-        if camera_type == 'droidcam':
-            ip = data.get('ip', '192.168.1.100')
-            port = data.get('port', '4747')
-        
-        # Si hay una cámara activa y es de diferente tipo, la detenemos
-        if camera and ((camera_type == 'pc' and not isinstance(camera, VideoCamera)) or 
-                      (camera_type == 'droidcam' and not isinstance(camera, DroidCamera))):
-            camera.stop()
-            camera = None
-        
-        if action == 'start':
-            if not camera:
-                if camera_type == 'droidcam':
-                    camera = DroidCamera(ip_address=ip, port=port)
-                else:
-                    camera = VideoCamera()
-            camera.start()
-            return JsonResponse({'status': 'started', 'camera_type': camera_type})
-            
-        elif action == 'stop':
-            if camera:
-                camera.stop()
-                camera = None
-            return JsonResponse({'status': 'stopped'})
-            
-    return JsonResponse({'status': 'error'}, status=400)
 # ----------------------------------------------------
 
 
@@ -1101,3 +1292,4 @@ def alerts_report_view(request):
     }
 
     return render(request, 'reportes/reports.html', context)
+

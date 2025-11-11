@@ -17,6 +17,7 @@ urlpatterns = [
     # URLs para la cámara
     path('video_feed/', views.video_feed, name='video_feed'),
     path('toggle_camera/', views.toggle_camera, name='toggle_camera'),
+    
     path('grabaciones/', views.grabaciones, name='grabaciones'),
 
 
