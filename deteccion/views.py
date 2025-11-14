@@ -23,15 +23,29 @@ import cv2
 import threading
 from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
 from django.db.models import Q
-
 from django.shortcuts import render, redirect, get_object_or_404
+import gc
+import psutil
 
+def check_memory_usage():
+    """Verifica el uso de memoria y libera recursos si es necesario"""
+    process = psutil.Process(os.getpid())
+    memory_mb = process.memory_info().rss / 1024 / 1024
+    
+    if memory_mb > 400:  # Si supera 400MB
+        print(f"⚠️  Alto uso de memoria: {memory_mb:.2f}MB - Liberando recursos...")
+        gc.collect()
+        
+    return memory_mb
 
 # =============================================
 # NUEVO SISTEMA DE VIDEO PARA RENDER
 # =============================================
+
+
+
+
 
 class VideoProcessor:
     def __init__(self):
@@ -41,10 +55,12 @@ class VideoProcessor:
         self.model = None
         self.is_render = 'RENDER' in os.environ
         self.model_loaded = False
+        self.frame_skip = 3  # Procesar 1 de cada 3 frames
+        self.frame_count = 0
         print(f"🎥 Inicializando procesador de video - RENDER: {self.is_render}")
         
     def initialize_video(self):
-        """Inicializa el video capture"""
+        """Inicializa el video capture optimizado"""
         try:
             # Buscar el video en diferentes ubicaciones posibles
             possible_paths = [
@@ -66,7 +82,9 @@ class VideoProcessor:
             if not self.cap.isOpened():
                 print("❌ Error: No se puede abrir el video")
                 return False
-                
+            
+            # Configuraciones optimizadas para reducir carga
+            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             print(f"✅ Video cargado correctamente: {self.video_path}")
             return True
             
@@ -75,7 +93,7 @@ class VideoProcessor:
             return False
     
     def initialize_model(self):
-        """Inicializa el modelo YOLO para detección"""
+        """Inicializa el modelo YOLO para detección - OPTIMIZADO"""
         try:
             from ultralytics import YOLO
             model_path = '/opt/render/project/src/models2/Models/best.pt'
@@ -89,20 +107,56 @@ class VideoProcessor:
             self.model_loaded = True
             
             print("✅ Modelo YOLOv8 cargado correctamente")
-            print(f"🔍 Clases detectables: {self.model.names}")
             return True
             
         except Exception as e:
             print(f"❌ Error cargando modelo YOLO: {e}")
             return False
     
+    def get_frame(self):
+        """Obtiene el siguiente frame del video - OPTIMIZADO"""
+        if self.cap is None:
+            return None
+            
+        # Saltar frames para reducir carga
+        self.frame_count += 1
+        if self.frame_count % self.frame_skip != 0:
+            self.cap.grab()  # Descarta frame sin decodificar
+            return None
+            
+        ret, frame = self.cap.read()
+        if not ret:
+            # Reiniciar video cuando termina
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, frame = self.cap.read()
+            if not ret:
+                return None
+        
+        # Reducir resolución para optimizar
+        frame = cv2.resize(frame, (640, 480))
+        
+        # Procesar frame según el modo
+        if self.mode == 'detection' and self.model_loaded:
+            processed_frame = self.process_frame_detection(frame)
+        else:
+            processed_frame = self.process_frame_view(frame)
+        
+        return processed_frame
+    
     def process_frame_detection(self, frame):
-        """Procesa un frame con detección YOLO"""
+        """Procesa un frame con detección YOLO - OPTIMIZADO"""
         if not self.model_loaded:
             return frame
             
         try:
-            results = self.model.predict(frame, conf=0.25, verbose=False, imgsz=320)
+            # Configuración optimizada para YOLO
+            results = self.model.predict(
+                frame, 
+                conf=0.25, 
+                verbose=False, 
+                imgsz=320,  # Reducir tamaño de procesamiento
+                stream=False  # No usar modo stream para evitar memory leaks
+            )
             
             if results and len(results) > 0:
                 result = results[0]
@@ -134,27 +188,6 @@ class VideoProcessor:
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         return frame
     
-    def get_frame(self):
-        """Obtiene el siguiente frame del video"""
-        if self.cap is None:
-            return None
-            
-        ret, frame = self.cap.read()
-        if not ret:
-            # Reiniciar video cuando termina
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, frame = self.cap.read()
-            if not ret:
-                return None
-        
-        # Procesar frame según el modo
-        if self.mode == 'detection' and self.model_loaded:
-            processed_frame = self.process_frame_detection(frame)
-        else:
-            processed_frame = self.process_frame_view(frame)
-        
-        return processed_frame
-    
     def set_mode(self, mode):
         """Cambia el modo de procesamiento"""
         if mode != self.mode:
@@ -164,6 +197,7 @@ class VideoProcessor:
             # Cargar modelo solo cuando se activa la detección
             if mode == 'detection' and not self.model_loaded:
                 self.initialize_model()
+
 
 # Singleton para el procesador de video
 video_processor = None
@@ -179,15 +213,18 @@ def get_video_processor():
                 return None
         return video_processor
 
+
 def generate_frames():
-    """Generador de frames para streaming con manejo de errores"""
+    """Generador de frames para streaming con manejo de errores OPTIMIZADO"""
     processor = get_video_processor()
     if processor is None:
         print("❌ No se pudo inicializar el procesador de video")
         return
     
     frame_count = 0
-    max_frames_without_detection = 100  # Prevenir loops infinitos
+    max_frames_without_detection = 50  # Reducido para prevenir loops infinitos
+    error_count = 0
+    max_errors = 5
     
     while True:
         try:
@@ -200,9 +237,12 @@ def generate_frames():
                 continue
             
             frame_count = 0  # Reset counter on successful frame
+            error_count = 0  # Reset error counter
             
-            # Codificar frame como JPEG
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            # Codificar frame como JPEG con calidad reducida
+            encode_params = [cv2.IMWRITE_JPEG_QUALITY, 60]  # 60% calidad
+            ret, buffer = cv2.imencode('.jpg', frame, encode_params)
+            
             if not ret:
                 continue
                 
@@ -210,20 +250,27 @@ def generate_frames():
             
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            # Pequeña pausa para reducir carga de CPU
+            import time
+            time.sleep(0.03)  # 30ms entre frames ≈ 33 FPS
                    
         except Exception as e:
             print(f"❌ Error generando frame: {e}")
-            import traceback
-            traceback.print_exc()
-            break
+            error_count += 1
+            if error_count >= max_errors:
+                print("🛑 Demasiados errores consecutivos, deteniendo stream...")
+                break
+            import time
+            time.sleep(0.1)  # Pausa más larga en caso de error
+
 
 # =============================================
 # VISTAS DE VIDEO ACTUALIZADAS
 # =============================================
 
-
 def video_feed(request):
-    """Endpoint para el stream de video - CORREGIDO"""
+    """Endpoint para el stream de video - OPTIMIZADO"""
     try:
         mode = request.GET.get('mode', 'view')
         print(f"🎥 Solicitando video feed - Modo: {mode}")
@@ -232,16 +279,27 @@ def video_feed(request):
         processor = get_video_processor()
         if processor:
             processor.set_mode(mode)
+        else:
+            return JsonResponse({'error': 'No se pudo inicializar el video'}, status=500)
         
-        return StreamingHttpResponse(
+        response = StreamingHttpResponse(
             generate_frames(), 
             content_type='multipart/x-mixed-replace; boundary=frame'
         )
+        
+        # Headers para optimizar streaming
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
     except Exception as e:
         print(f"❌ Error en video_feed: {e}")
         import traceback
         traceback.print_exc()
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+    
 @csrf_exempt
 def toggle_camera(request):
     """Función mantenida para compatibilidad - NUEVA VERSIÓN"""
