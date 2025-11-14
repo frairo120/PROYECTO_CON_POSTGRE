@@ -1,3 +1,5 @@
+[file name]: inicio.html
+[file content begin]
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -300,6 +302,29 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+        /* Botones de control de video específicos */
+        .start-video-btn {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        
+        .start-video-btn:hover {
+            background-color: #45a049;
+            border-color: #45a049;
+        }
+        
+        .stop-video-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border-color: var(--danger-color);
+        }
+        
+        .stop-video-btn:hover {
+            background-color: #d32f2f;
+            border-color: #d32f2f;
+        }
         
         /* Notifications Card Styles */
         .table-responsive {
@@ -401,6 +426,24 @@
             text-align: center;
             margin-top: 10px;
         }
+
+        .video-controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .video-mode-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .video-action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -475,25 +518,31 @@
                             <img id="video-feed" style="display: none;" alt="Video de prueba" class="video-feed">
                             <div id="camera-status" class="text-muted">
                                 <i class="fas fa-video fa-2x mb-2"></i>
-                                <p>Preparando video de prueba...</p>
+                                <p>Presiona "Iniciar Video" para comenzar</p>
                             </div>
                         </div>
                         
-                        <div class="camera-controls">
-                            <div class="d-flex gap-2 flex-grow-1">
+                        <div class="video-controls-section">
+                            <div class="video-mode-section">
                                 <select id="video-mode" class="form-select">
                                     <option value="view">Solo Ver Video</option>
                                     <option value="detection">Ver con Detección</option>
                                 </select>
                             </div>
                             
-                            <button class="control-button fullscreen-btn">
-                                <i class="fas fa-expand"></i> <span>Pantalla completa</span>
-                            </button>
-                            
-                            <button class="control-button" id="play-pause-btn">
-                                <i class="fas fa-play"></i> <span>Reproducir</span>
-                            </button>
+                            <div class="video-action-buttons">
+                                <button class="control-button start-video-btn" id="start-video-btn">
+                                    <i class="fas fa-play-circle"></i> <span>Iniciar Video</span>
+                                </button>
+                                
+                                <button class="control-button stop-video-btn" id="stop-video-btn" disabled>
+                                    <i class="fas fa-stop-circle"></i> <span>Parar Video</span>
+                                </button>
+                                
+                                <button class="control-button fullscreen-btn">
+                                    <i class="fas fa-expand"></i> <span>Pantalla completa</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="video-info">
@@ -603,14 +652,21 @@
         });
 
         // =============================================
-        // SISTEMA DE VIDEO PARA RENDER
+        // SISTEMA DE VIDEO CON BOTONES INICIAR/PARAR
         // =============================================
 
         let videoPlaying = false;
         let currentMode = 'view';
+        let videoElement = null;
 
-        // Configuración de video
-        document.getElementById('video-mode').addEventListener('change', function() {
+        // Referencias a los botones
+        const startVideoBtn = document.getElementById('start-video-btn');
+        const stopVideoBtn = document.getElementById('stop-video-btn');
+        const videoModeSelect = document.getElementById('video-mode');
+        const fullscreenBtn = document.querySelector('.fullscreen-btn');
+
+        // Configuración de modo de video
+        videoModeSelect.addEventListener('change', function() {
             currentMode = this.value;
             console.log(`🎬 Cambiando a modo: ${currentMode}`);
             
@@ -619,13 +675,12 @@
             }
         });
 
-        // Función para cargar el video
-        function loadVideo() {
+        // Función para iniciar video
+        function startVideo() {
             const video = document.getElementById('video-feed');
             const statusDiv = document.getElementById('camera-status');
-            const playPauseBtn = document.getElementById('play-pause-btn');
             
-            console.log('🔄 Cargando video de prueba...');
+            console.log('🔄 Iniciando video...');
             
             // URL del video feed con parámetros
             let videoUrl = '{% url "deteccion:video_feed" %}';
@@ -636,52 +691,61 @@
             statusDiv.style.display = 'none';
             videoPlaying = true;
             
+            // Actualizar estado de botones
+            updateButtonStates();
+            
             // Configurar eventos del video
             video.onloadstart = () => {
                 console.log('📹 Video: carga iniciada');
-                playPauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Cargando...</span>';
-                playPauseBtn.disabled = true;
+                startVideoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Cargando...</span>';
+                startVideoBtn.disabled = true;
             };
             
             video.onloadeddata = () => {
                 console.log('✅ Video: datos cargados');
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
-                playPauseBtn.disabled = false;
+                startVideoBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span>Iniciar Video</span>';
+                startVideoBtn.disabled = true; // Mantener deshabilitado mientras se reproduce
                 
                 // Reproducir automáticamente
                 video.play().catch(err => {
                     console.warn('⚠️ No se puede reproducir automáticamente:', err);
+                    showNotification('Error al reproducir video automáticamente', 'error');
                 });
             };
             
             video.onplay = () => {
                 console.log('🎬 Video reproduciéndose');
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
+                startVideoBtn.disabled = true;
+                stopVideoBtn.disabled = false;
             };
             
             video.onpause = () => {
                 console.log('⏸️ Video pausado');
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
+                startVideoBtn.disabled = false;
+                stopVideoBtn.disabled = true;
             };
             
             video.onended = () => {
                 console.log('🏁 Video terminado');
-                playPauseBtn.innerHTML = '<i class="fas fa-redo"></i> <span>Reiniciar</span>';
                 videoPlaying = false;
+                updateButtonStates();
                 
-                // Auto-reiniciar después de 2 segundos
-                setTimeout(() => {
-                    if (!videoPlaying) {
-                        loadVideo();
-                    }
-                }, 2000);
+                // Mostrar mensaje de video terminado
+                statusDiv.style.display = 'flex';
+                statusDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-flag-checkered fa-2x mb-2"></i>
+                        <p>Video terminado</p>
+                        <small class="text-muted">Presiona "Iniciar Video" para reproducir nuevamente</small>
+                    </div>
+                `;
+                video.style.display = 'none';
             };
             
             video.onerror = (e) => {
                 console.error('❌ Error en video:', e);
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
-                playPauseBtn.disabled = false;
                 videoPlaying = false;
+                updateButtonStates();
                 
                 // Mostrar error
                 statusDiv.style.display = 'flex';
@@ -693,63 +757,87 @@
                     </div>
                 `;
                 video.style.display = 'none';
+                
+                showNotification('Error al cargar el video', 'error');
             };
             
             // Forzar carga
             video.load();
+            videoElement = video;
+        }
+
+        // Función para parar video
+        function stopVideo() {
+            const video = document.getElementById('video-feed');
+            const statusDiv = document.getElementById('camera-status');
+            
+            if (video) {
+                video.pause();
+                video.src = '';
+                video.style.display = 'none';
+            }
+            
+            videoPlaying = false;
+            
+            // Mostrar estado de detenido
+            statusDiv.style.display = 'flex';
+            statusDiv.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-stop-circle fa-2x mb-2"></i>
+                    <p>Video detenido</p>
+                    <small class="text-muted">Presiona "Iniciar Video" para comenzar</small>
+                </div>
+            `;
+            
+            updateButtonStates();
+            console.log('🛑 Video detenido');
         }
 
         // Función para reiniciar video con nuevo modo
         function restartVideoWithNewMode() {
-            const video = document.getElementById('video-feed');
-            video.pause();
+            stopVideo();
             setTimeout(() => {
-                loadVideo();
+                startVideo();
             }, 500);
         }
 
-        // Control de reproducción/pausa
-        document.getElementById('play-pause-btn').addEventListener('click', function() {
-            const video = document.getElementById('video-feed');
-            const btn = this;
-            
-            if (!videoPlaying) {
-                // Iniciar reproducción
-                loadVideo();
-            } else if (video.paused) {
-                // Reanudar
-                video.play().then(() => {
-                    btn.innerHTML = '<i class="fas fa-pause"></i> <span>Pausar</span>';
-                }).catch(err => {
-                    console.error('Error al reanudar:', err);
-                });
+        // Función para actualizar estados de botones
+        function updateButtonStates() {
+            if (videoPlaying) {
+                startVideoBtn.disabled = true;
+                stopVideoBtn.disabled = false;
+                startVideoBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span>Iniciar Video</span>';
             } else {
-                // Pausar
-                video.pause();
-                btn.innerHTML = '<i class="fas fa-play"></i> <span>Reproducir</span>';
+                startVideoBtn.disabled = false;
+                stopVideoBtn.disabled = true;
+                startVideoBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span>Iniciar Video</span>';
             }
-        });
+        }
+
+        // Eventos de los botones
+        startVideoBtn.addEventListener('click', startVideo);
+        stopVideoBtn.addEventListener('click', stopVideo);
 
         // Fullscreen
-        document.querySelector('.fullscreen-btn').addEventListener('click', () => {
+        fullscreenBtn.addEventListener('click', () => {
             const video = document.querySelector('.video-feed');
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) {
-                video.webkitRequestFullscreen();
-            } else if (video.msRequestFullscreen) {
-                video.msRequestFullscreen();
+            const videoContainer = document.querySelector('.video-placeholder');
+            
+            const element = video.style.display !== 'none' ? video : videoContainer;
+            
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
             }
         });
 
-        // Cargar video automáticamente al iniciar (solo vista)
+        // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Inicializando reproductor de video...');
-            
-            // Iniciar en modo vista después de un breve delay
-            setTimeout(() => {
-                loadVideo();
-            }, 1000);
+            updateButtonStates();
         });
 
         // =============================================
@@ -918,44 +1006,8 @@
                 console.log('Actualizaciones reanudadas - Pestaña activa');
             }
         });
-
-        // =============================================
-        // FUNCIÓN DE PRUEBA PARA DEBUGGING
-        // =============================================
-        
-        function testVideoEndpoint() {
-            console.log('🧪 Probando endpoint de video...');
-            
-            fetch('{% url "deteccion:video_feed" %}?mode=view')
-                .then(response => {
-                    console.log('📡 Respuesta del servidor:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        ok: response.ok,
-                        type: response.type
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    return response.blob();
-                })
-                .then(blob => {
-                    console.log('✅ Video feed responde correctamente. Tipo:', blob.type, 'Tamaño:', blob.size);
-                    
-                    if (blob.size === 0) {
-                        console.warn('⚠️ El video feed está vacío (tamaño 0)');
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error al conectar con video feed:', error);
-                });
-        }
-
-        // Ejecutar prueba al cargar (opcional)
-        // testVideoEndpoint();
     </script>
 
 </body>
 </html>
+[file content end]

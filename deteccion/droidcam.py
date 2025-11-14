@@ -402,7 +402,7 @@ class DroidCamera:
 
                     # ✅ EN RENDER: Mostrar indicador de video de prueba
                     if self.is_render:
-                        cv2.putText(annotated_frame, "🎥 VIDEO DE PRUEBA - RENDER", 
+                        cv2.putText(annotated_frame, "🎥", 
                                    (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                         y_offset += 30
 
@@ -436,7 +436,7 @@ class DroidCamera:
                     
                     # ✅ EN RENDER: Indicar que es video de prueba
                     if self.is_render:
-                        cv2.putText(original_image, "🎥 VIDEO DE PRUEBA - RENDER", (10, 30),
+                        cv2.putText(original_image, "🎥 ", (10, 30),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                         cv2.putText(original_image, "Detecciones: 0", (10, 60),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
